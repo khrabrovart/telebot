@@ -2,18 +2,6 @@ use serde::Deserialize;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
-pub enum PostValidationError {
-    #[error("Text cannot be empty")]
-    EmptyText,
-
-    #[error("Poll question cannot be empty")]
-    EmptyPollQuestion,
-
-    #[error("Poll must have at least 2 options")]
-    InsufficientPollOptions,
-}
-
-#[derive(Debug, Error)]
 pub enum PostParseError {
     #[error("Deserialization error: {0}")]
     DeserializationError(String),
@@ -46,29 +34,4 @@ pub struct Post {
     pub is_active: bool,
     #[serde(default)]
     pub is_ready: bool,
-}
-
-impl Post {
-    pub fn is_active(&self) -> bool {
-        self.is_active && self.is_ready && self.validate().is_ok()
-    }
-
-    pub fn validate(&self) -> Result<(), PostValidationError> {
-        match &self.content {
-            PostContent::Text { text } => {
-                if text.is_empty() {
-                    return Err(PostValidationError::EmptyText);
-                }
-            }
-            PostContent::Poll { question, options } => {
-                if question.is_empty() {
-                    return Err(PostValidationError::EmptyPollQuestion);
-                }
-                if options.len() < 2 {
-                    return Err(PostValidationError::InsufficientPollOptions);
-                }
-            }
-        }
-        Ok(())
-    }
 }

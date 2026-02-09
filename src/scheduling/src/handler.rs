@@ -42,13 +42,13 @@ pub async fn handle(event: LambdaEvent<Event>) -> Result<(), Error> {
                     "Parsed post"
                 );
 
-                if post.is_active() {
-                    info!(id = %post.id, "Creating/updating scheduler");
-                    scheduler.create_or_update_schedule(&post).await?;
-                } else {
-                    info!(id = %post.id, "Deleting scheduler (inactive or partial)");
-                    scheduler.delete_schedule(&post.id).await?;
+                if !post.is_ready {
+                    warn!(id = %post.id, "Post is not fully configured, skipping");
+                    continue;
                 }
+
+                info!(id = %post.id, "Creating/updating scheduler");
+                scheduler.create_or_update_schedule(&post).await?;
             }
             StreamAction::Remove => {
                 let old_image = match &record.change.old_image {

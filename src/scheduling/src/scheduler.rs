@@ -87,6 +87,12 @@ impl SchedulerClient {
 
         let schedule_expression = format!("cron({})", post.schedule.trim());
 
+        let state = if post.is_active {
+            ScheduleState::Active
+        } else {
+            ScheduleState::Inactive
+        };
+
         let schedule_exists = self.schedule_exists(&schedule_name).await?;
 
         if schedule_exists {
@@ -95,6 +101,7 @@ impl SchedulerClient {
                 .update_schedule()
                 .group_name(&self.group_name)
                 .name(&schedule_name)
+                .state(state)
                 .schedule_expression(&schedule_expression)
                 .schedule_expression_timezone(&post.timezone)
                 .target(target)
@@ -108,6 +115,7 @@ impl SchedulerClient {
                 .create_schedule()
                 .group_name(&self.group_name)
                 .name(&schedule_name)
+                .state(state)
                 .schedule_expression(&schedule_expression)
                 .schedule_expression_timezone(&post.timezone)
                 .target(target)

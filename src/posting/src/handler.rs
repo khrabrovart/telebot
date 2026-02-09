@@ -1,4 +1,4 @@
-use crate::{Post, SsmClient, TelegramClient};
+use crate::{Post, SsmClient, TelegramBotClient};
 use lambda_runtime::{Error, LambdaEvent};
 use serde::Deserialize;
 use telebot_shared::DynamoDbClient;
@@ -28,20 +28,18 @@ pub async fn handle(event: LambdaEvent<SchedulerEvent>) -> Result<(), Error> {
         "Post retrieved from DynamoDB"
     );
 
-    // Move this logic out of here
-    if !post.is_active() {
-        if !post.is_active {
-            warn!(post_id = %post.id, "Post is not active, skipping");
-        } else if !post.is_ready {
-            warn!(post_id = %post.id, "Post is not fully configured, skipping");
-        } else {
-            warn!(post_id = %post.id, "Post validation failed, skipping");
-        }
+    if !post.is_active {
+        warn!(post_id = %post.id, "Post is not active, skipping");
+        return Ok(());
+    }
+
+    if !post.is_ready {
+        warn!(post_id = %post.id, "Post is not fully configured, skipping");
         return Ok(());
     }
 
     let ssm = SsmClient::from_env().await?;
-    let client = TelegramClient::from_ssm(&ssm).await?;
+    let client = TelegramBotClient::from_ssm(&ssm).await?;
 
     client.send_post(&post).await?;
 
