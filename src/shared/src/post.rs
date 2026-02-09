@@ -1,4 +1,5 @@
 use serde::Deserialize;
+use serde_dynamo::Item;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -11,6 +12,12 @@ pub enum PostValidationError {
 
     #[error("Poll must have at least 2 options")]
     InsufficientPollOptions,
+}
+
+#[derive(Debug, Error)]
+pub enum PostParseError {
+    #[error("Deserialization error: {0}")]
+    DeserializationError(String),
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -35,15 +42,16 @@ pub struct Post {
     pub chat_id: String,
     pub content: PostContent,
     pub schedule: String,
+    pub timezone: String,
     #[serde(default)]
     pub is_active: bool,
     #[serde(default)]
-    pub is_partial: bool,
+    pub is_ready: bool,
 }
 
 impl Post {
-    pub fn is_ready(&self) -> bool {
-        self.is_active && !self.is_partial && self.validate().is_ok()
+    pub fn is_active(&self) -> bool {
+        self.is_active && self.is_ready && self.validate().is_ok()
     }
 
     pub fn validate(&self) -> Result<(), PostValidationError> {

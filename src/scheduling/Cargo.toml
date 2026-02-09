@@ -1,17 +1,19 @@
 [package]
-name = "posting-lambda"
+name = "scheduling-lambda"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 telebot-shared = { path = "../shared" }
+serde_dynamo = { version = "4", features = ["aws-sdk-dynamodb+1"] }
 aws-config = { version = "1", features = ["behavior-version-latest"] }
-aws-sdk-dynamodb = "1"
-aws-sdk-ssm = "1"
+aws-sdk-scheduler = "1"
 lambda_runtime = "0.13"
 serde = { version = "1.0", features = ["derive"] }
-serde_dynamo = { version = "4", features = ["aws-sdk-dynamodb+1"] }
-teloxide = { version = "0.14", default-features = false, features = ["rustls"] }
+serde_json = "1"
+aws_lambda_events = { version = "0.16", default-features = false, features = [
+    "dynamodb",
+] }
 thiserror = "2"
 tokio = { version = "1", features = ["macros"] }
 tracing = "0.1"

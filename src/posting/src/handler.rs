@@ -1,6 +1,7 @@
-use crate::{DynamoDbClient, Post, SsmClient, TelegramClient};
+use crate::{Post, SsmClient, TelegramClient};
 use lambda_runtime::{Error, LambdaEvent};
 use serde::Deserialize;
+use telebot_shared::DynamoDbClient;
 use tracing::{info, warn};
 
 #[derive(Debug, Deserialize)]
@@ -16,21 +17,22 @@ pub async fn handle(event: LambdaEvent<SchedulerEvent>) -> Result<(), Error> {
     let table_name = std::env::var("POSTING_DATA_TABLE")
         .expect("POSTING_DATA_TABLE environment variable not set");
 
-    let db = DynamoDbClient::new(table_name).await;
-    let post: Post = db.get_item(&payload.posting_data_id).await?;
+    let db = DynamoDbClient::new().await;
+    let post: Post = db.get_item(&table_name, &payload.posting_data_id).await?;
 
     info!(
         post_id = %post.id,
         content = ?post.content,
         is_active = post.is_active,
-        is_partial = post.is_partial,
+        is_ready = post.is_ready,
         "Post retrieved from DynamoDB"
     );
 
-    if !post.is_ready() {
+    // Move this logic out of here
+    if !post.is_active() {
         if !post.is_active {
             warn!(post_id = %post.id, "Post is not active, skipping");
-        } else if post.is_partial {
+        } else if !post.is_ready {
             warn!(post_id = %post.id, "Post is not fully configured, skipping");
         } else {
             warn!(post_id = %post.id, "Post validation failed, skipping");

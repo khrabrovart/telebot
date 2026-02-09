@@ -52,10 +52,54 @@ jobs:
           path: ./src/posting/target/lambda/posting-lambda/
           retention-days: 1
 
+  build-scheduling:
+    name: "Build Scheduling Lambda"
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./src/scheduling
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Setup Zig
+        uses: mlugg/setup-zig@v2
+
+      - name: Setup Cargo Lambda
+        run: pip3 install cargo-lambda
+
+      - name: Cache Dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src/scheduling
+
+      - name: Format
+        run: cargo fmt --all -- --check
+
+      - name: Lint
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+      - name: Build
+        run: cargo lambda build --release --arm64
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: scheduling-lambda
+          path: ./src/scheduling/target/lambda/scheduling-lambda/
+          retention-days: 1
+
   plan:
     name: "Terraform Plan"
     runs-on: ubuntu-latest
-    needs: [build-posting]
+    needs: [build-posting, build-scheduling]
 
     defaults:
       run:
@@ -70,6 +114,12 @@ jobs:
         with:
           name: posting-lambda
           path: ./posting-lambda
+
+      - name: Download Scheduling Function Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: scheduling-lambda
+          path: ./scheduling-lambda
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -118,6 +168,12 @@ jobs:
         with:
           name: posting-lambda
           path: ./posting-lambda
+
+      - name: Download Scheduling Function Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: scheduling-lambda
+          path: ./scheduling-lambda
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3

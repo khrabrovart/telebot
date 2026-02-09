@@ -1,5 +1,5 @@
-use crate::post::{Post, PostContent};
 use crate::ssm::SsmClient;
+use crate::{Post, PostContent};
 use teloxide::{
     prelude::*,
     types::{InputPollOption, Recipient},

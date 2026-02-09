@@ -1,4 +1,4 @@
-use aws_sdk_dynamodb::{types::AttributeValue, Client};
+use aws_sdk_dynamodb::{types::AttributeValue as AwsAttributeValue, Client};
 use serde::de::DeserializeOwned;
 use thiserror::Error;
 use tracing::info;
@@ -17,25 +17,27 @@ pub enum DynamoDbError {
 
 pub struct DynamoDbClient {
     client: Client,
-    table_name: String,
 }
 
 impl DynamoDbClient {
-    pub async fn new(table_name: String) -> Self {
+    pub async fn new() -> Self {
         let config = aws_config::load_from_env().await;
         let client = Client::new(&config);
-
-        Self { client, table_name }
+        Self { client }
     }
 
-    pub async fn get_item<T: DeserializeOwned>(&self, id: &str) -> Result<T, DynamoDbError> {
-        info!(id, table = %self.table_name, "Fetching item from DynamoDB");
+    pub async fn get_item<T: DeserializeOwned>(
+        &self,
+        table_name: &str,
+        id: &str,
+    ) -> Result<T, DynamoDbError> {
+        info!(id, table = %table_name, "Fetching item from DynamoDB");
 
         let result = self
             .client
             .get_item()
-            .table_name(&self.table_name)
-            .key("Id", AttributeValue::S(id.to_string()))
+            .table_name(table_name)
+            .key("Id", AwsAttributeValue::S(id.to_string()))
             .send()
             .await
             .map_err(|e| DynamoDbError::ClientError(e.to_string()))?;
