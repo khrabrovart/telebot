@@ -19,6 +19,7 @@ resource "aws_lambda_function" "posting_lambda" {
   environment {
     variables = {
       BOT_TOKEN_PARAMETER = aws_ssm_parameter.bot_token.name
+      POSTING_DATA_TABLE  = aws_dynamodb_table.posting_data.name
     }
   }
 
