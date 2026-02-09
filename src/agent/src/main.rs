@@ -1,6 +1,5 @@
 use aws_lambda_events::apigw::{ApiGatewayProxyRequest, ApiGatewayProxyResponse};
 use lambda_runtime::{service_fn, Error, LambdaEvent};
-use serde::{Deserialize, Serialize};
 use tracing::info;
 
 #[tokio::main]
