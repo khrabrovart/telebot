@@ -1,6 +1,9 @@
 use crate::post::{Post, PostContent};
 use crate::ssm::SsmClient;
-use teloxide::{prelude::*, types::{ChatId, InputPollOption}};
+use teloxide::{
+    prelude::*,
+    types::{ChatId, InputPollOption},
+};
 use thiserror::Error;
 use tracing::info;
 
@@ -48,9 +51,7 @@ impl TelegramClient {
         let chat_id = ChatId(post.chat_id);
 
         match &post.content {
-            PostContent::Text { text } => {
-                self.send_text_message(chat_id, text).await
-            }
+            PostContent::Text { text } => self.send_text_message(chat_id, text).await,
             PostContent::Poll { question, options } => {
                 self.send_poll(chat_id, question, options).await
             }
