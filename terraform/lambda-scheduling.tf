@@ -1,6 +1,6 @@
 data "archive_file" "scheduling_lambda_zip" {
   type        = "zip"
-  source_file = "../scheduling-lambda/bootstrap"
+  source_file = "../src/scheduling-lambda/bootstrap"
   output_path = "scheduling_lambda.zip"
 }
 
@@ -21,6 +21,7 @@ resource "aws_lambda_function" "scheduling_lambda" {
       TARGET_LAMBDA_ARN    = aws_lambda_function.posting_lambda.arn
       SCHEDULER_ROLE_ARN   = aws_iam_role.scheduler_role.arn
       SCHEDULER_GROUP_NAME = aws_scheduler_schedule_group.scheduler_group.name
+      SCHEDULE_PREFIX      = "${local.app_name}"
     }
   }
 

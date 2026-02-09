@@ -1,5 +1,4 @@
 use serde::Deserialize;
-use serde_dynamo::Item;
 use thiserror::Error;
 
 #[derive(Debug, Error)]

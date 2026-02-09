@@ -1,0 +1,2 @@
+[workspace]
+members = ["src/posting", "src/scheduling", "src/shared", "src/agent"]

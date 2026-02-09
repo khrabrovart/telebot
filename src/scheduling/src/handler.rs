@@ -7,15 +7,7 @@ use tracing::{info, warn};
 pub async fn handle(event: LambdaEvent<Event>) -> Result<(), Error> {
     let (payload, _context) = event.into_parts();
 
-    let target_lambda_arn =
-        std::env::var("TARGET_LAMBDA_ARN").expect("TARGET_LAMBDA_ARN environment variable not set");
-    let scheduler_role_arn = std::env::var("SCHEDULER_ROLE_ARN")
-        .expect("SCHEDULER_ROLE_ARN environment variable not set");
-    let scheduler_group_name = std::env::var("SCHEDULER_GROUP_NAME")
-        .expect("SCHEDULER_GROUP_NAME environment variable not set");
-
-    let scheduler =
-        SchedulerClient::new(scheduler_group_name, target_lambda_arn, scheduler_role_arn).await;
+    let scheduler = SchedulerClient::new().await;
 
     for record in payload.records {
         let event_name = record.event_name.clone();

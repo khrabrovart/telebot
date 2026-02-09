@@ -10,3 +10,14 @@ resource "aws_dynamodb_table" "posting_data" {
     type = "S"
   }
 }
+
+resource "aws_dynamodb_table" "users" {
+  name         = "${local.app_name}-users"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "Id"
+
+  attribute {
+    name = "Id"
+    type = "S"
+  }
+}

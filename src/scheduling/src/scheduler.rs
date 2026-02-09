@@ -32,14 +32,23 @@ pub struct SchedulerClient {
     group_name: String,
     target_lambda_arn: String,
     scheduler_role_arn: String,
+    schedule_prefix: String,
 }
 
 impl SchedulerClient {
-    pub async fn new(
-        group_name: String,
-        target_lambda_arn: String,
-        scheduler_role_arn: String,
-    ) -> Self {
+    pub async fn new() -> Self {
+        let target_lambda_arn = std::env::var("TARGET_LAMBDA_ARN")
+            .expect("TARGET_LAMBDA_ARN environment variable not set");
+
+        let scheduler_role_arn = std::env::var("SCHEDULER_ROLE_ARN")
+            .expect("SCHEDULER_ROLE_ARN environment variable not set");
+
+        let group_name = std::env::var("SCHEDULER_GROUP_NAME")
+            .expect("SCHEDULER_GROUP_NAME environment variable not set");
+
+        let schedule_prefix =
+            std::env::var("SCHEDULE_PREFIX").expect("SCHEDULE_PREFIX environment variable not set");
+
         let config = aws_config::load_from_env().await;
         let client = Client::new(&config);
 
@@ -48,11 +57,12 @@ impl SchedulerClient {
             group_name,
             target_lambda_arn,
             scheduler_role_arn,
+            schedule_prefix,
         }
     }
 
     fn schedule_name(&self, posting_id: &str) -> String {
-        format!("posting-{}", posting_id)
+        format!("{}-posting-{}", self.schedule_prefix, posting_id)
     }
 
     pub async fn create_or_update_schedule(&self, post: &Post) -> Result<(), SchedulerError> {
