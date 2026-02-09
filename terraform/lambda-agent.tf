@@ -1,6 +1,6 @@
 data "archive_file" "agent_lambda_zip" {
   type        = "zip"
-  source_file = "../src/agent-lambda/bootstrap"
+  source_file = "../agent-lambda/bootstrap"
   output_path = "agent_lambda.zip"
 }
 

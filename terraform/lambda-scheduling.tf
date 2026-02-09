@@ -1,6 +1,6 @@
 data "archive_file" "scheduling_lambda_zip" {
   type        = "zip"
-  source_file = "../src/scheduling-lambda/bootstrap"
+  source_file = "../scheduling-lambda/bootstrap"
   output_path = "scheduling_lambda.zip"
 }
 
