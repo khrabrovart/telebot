@@ -17,10 +17,13 @@ pub enum PostValidationError {
 #[serde(tag = "Type", rename_all = "PascalCase")]
 pub enum PostContent {
     Text {
+        #[serde(rename = "Text")]
         text: String,
     },
     Poll {
+        #[serde(rename = "Question")]
         question: String,
+        #[serde(rename = "Options")]
         options: Vec<String>,
     },
 }
