@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   build-posting:
-    name: "Posting"
+    name: "Build Posting Lambda"
     runs-on: ubuntu-latest
 
     defaults:
@@ -25,8 +25,11 @@ jobs:
         with:
           components: rustfmt, clippy
 
+      - name: Setup Zig
+        uses: mlugg/setup-zig@v2
+
       - name: Setup Cargo Lambda
-        uses: cargo-lambda/cargo-lambda-action@v1
+        run: pip3 install cargo-lambda
 
       - name: Cache Dependencies
         uses: Swatinem/rust-cache@v2
