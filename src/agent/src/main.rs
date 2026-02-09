@@ -1,5 +1,5 @@
-use lambda_runtime::{service_fn, Error};
 use agent_lambda::handle;
+use lambda_http::{run, service_fn, Error};
 use tracing::info;
 
 #[tokio::main]
@@ -16,5 +16,5 @@ async fn main() -> Result<(), Error> {
 
     info!("Starting Agent Lambda");
 
-    lambda_runtime::run(service_fn(handle)).await
+    run(service_fn(handle)).await
 }

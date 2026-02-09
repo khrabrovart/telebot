@@ -1,9 +1,9 @@
-use crate::Post;
 use aws_sdk_scheduler::{
     types::{FlexibleTimeWindow, FlexibleTimeWindowMode, ScheduleState, Target},
     Client,
 };
 use serde::Serialize;
+use telebot_shared::Post;
 use thiserror::Error;
 use tracing::info;
 

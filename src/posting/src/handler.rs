@@ -1,7 +1,7 @@
-use crate::{Post, SsmClient, TelegramBotClient};
+use crate::TelegramBotClient;
 use lambda_runtime::{Error, LambdaEvent};
 use serde::Deserialize;
-use telebot_shared::DynamoDbClient;
+use telebot_shared::{DynamoDbClient, Post, SsmClient};
 use tracing::{info, warn};
 
 #[derive(Debug, Deserialize)]
@@ -39,9 +39,9 @@ pub async fn handle(event: LambdaEvent<SchedulerEvent>) -> Result<(), Error> {
     }
 
     let ssm = SsmClient::from_env().await?;
-    let client = TelegramBotClient::from_ssm(&ssm).await?;
+    let bot_client = TelegramBotClient::from_ssm(&ssm).await?;
 
-    client.send_post(&post).await?;
+    bot_client.send_post(&post).await?;
 
     Ok(())
 }

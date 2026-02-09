@@ -1,5 +1,4 @@
-use crate::ssm::SsmClient;
-use crate::{Post, PostContent};
+use telebot_shared::{Post, PostContent, SsmClient};
 use teloxide::{
     prelude::*,
     types::{InputPollOption, Recipient},

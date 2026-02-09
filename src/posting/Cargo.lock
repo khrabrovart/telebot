@@ -2354,6 +2354,7 @@ version = "0.1.0"
 dependencies = [
  "aws-config",
  "aws-sdk-dynamodb",
+ "aws-sdk-ssm",
  "serde",
  "serde_dynamo",
  "thiserror",

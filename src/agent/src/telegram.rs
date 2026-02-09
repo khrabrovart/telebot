@@ -1,5 +1,4 @@
-use crate::ssm::SsmClient;
-use crate::{Post, PostContent};
+use telebot_shared::{Post, PostContent, SsmClient};
 use teloxide::{
     prelude::*,
     types::{InputPollOption, Recipient},
@@ -25,7 +24,7 @@ pub enum TelegramBotError {
 }
 
 pub struct TelegramBotClient {
-    bot: Bot,
+    pub bot: Bot, // TODO: Make private and add methods for sending messages/polls
 }
 
 impl TelegramBotClient {
