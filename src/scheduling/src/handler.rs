@@ -42,8 +42,9 @@ pub async fn handle(event: LambdaEvent<Event>) -> Result<(), Error> {
                     "Parsed post"
                 );
 
+                // TODO: Add validation to ensure we have the necessary fields for scheduling
                 if !post.is_ready {
-                    warn!(id = %post.id, "Post is not fully configured, skipping");
+                    scheduler.delete_schedule(&post.id).await?;
                     continue;
                 }
 

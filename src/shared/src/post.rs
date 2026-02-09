@@ -22,6 +22,7 @@ pub enum PostContent {
     },
 }
 
+// TODO: Make everything optional and add validation to ensure we have the necessary fields for scheduling
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct Post {
