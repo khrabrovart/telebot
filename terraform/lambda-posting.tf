@@ -1,6 +1,6 @@
 data "archive_file" "posting_lambda_zip" {
   type        = "zip"
-  source_dir  = "../src/posting"
+  source_file = "../posting-lambda/bootstrap"
   output_path = "posting_lambda.zip"
 }
 
