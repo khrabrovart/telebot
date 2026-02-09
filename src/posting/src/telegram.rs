@@ -2,7 +2,7 @@ use crate::post::{Post, PostContent};
 use crate::ssm::SsmClient;
 use teloxide::{
     prelude::*,
-    types::{ChatId, InputPollOption},
+    types::{InputPollOption, Recipient},
 };
 use thiserror::Error;
 use tracing::info;
@@ -48,7 +48,7 @@ impl TelegramClient {
         post.validate()
             .map_err(|e| TelegramError::ValidationError(e.to_string()))?;
 
-        let chat_id = ChatId(post.chat_id);
+        let chat_id: Recipient = post.chat_id.clone().into();
 
         match &post.content {
             PostContent::Text { text } => self.send_text_message(chat_id, text).await,
@@ -58,7 +58,11 @@ impl TelegramClient {
         }
     }
 
-    async fn send_text_message(&self, chat_id: ChatId, text: &str) -> Result<i32, TelegramError> {
+    async fn send_text_message(
+        &self,
+        chat_id: Recipient,
+        text: &str,
+    ) -> Result<i32, TelegramError> {
         info!("Sending text message to chat");
 
         let message = self
@@ -75,7 +79,7 @@ impl TelegramClient {
 
     async fn send_poll(
         &self,
-        chat_id: ChatId,
+        chat_id: Recipient,
         question: &str,
         options: &[String],
     ) -> Result<i32, TelegramError> {

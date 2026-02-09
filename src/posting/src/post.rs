@@ -29,7 +29,7 @@ pub enum PostContent {
 #[serde(rename_all = "PascalCase")]
 pub struct Post {
     pub id: String,
-    pub chat_id: i64,
+    pub chat_id: String,
     pub content: PostContent,
     pub schedule: String,
     #[serde(default)]
