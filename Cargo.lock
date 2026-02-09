@@ -3,13 +3,14 @@
 version = 4
 
 [[package]]
-name = "agent"
+name = "agent-lambda"
 version = "0.1.0"
 dependencies = [
  "aws_lambda_events",
  "lambda_runtime",
  "serde",
  "serde_json",
+ "telebot-shared",
  "teloxide",
  "tokio",
  "tracing",
