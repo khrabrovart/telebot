@@ -7,4 +7,4 @@ pub use ssm::{SsmClient, SsmError};
 pub use telebot_shared::{DynamoDbClient, DynamoDbError};
 pub use telegram::{TelegramBotClient, TelegramBotError};
 
-pub use telebot_shared::{Post, PostContent, PostValidationError};
+pub use telebot_shared::{Post, PostContent};

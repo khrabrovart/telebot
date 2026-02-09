@@ -1,6 +1,6 @@
 use crate::Post;
 use aws_sdk_scheduler::{
-    types::{FlexibleTimeWindow, FlexibleTimeWindowMode, Target},
+    types::{FlexibleTimeWindow, FlexibleTimeWindowMode, ScheduleState, Target},
     Client,
 };
 use serde::Serialize;
@@ -88,9 +88,9 @@ impl SchedulerClient {
         let schedule_expression = format!("cron({})", post.schedule.trim());
 
         let state = if post.is_active {
-            ScheduleState::Active
+            ScheduleState::Enabled
         } else {
-            ScheduleState::Inactive
+            ScheduleState::Disabled
         };
 
         let schedule_exists = self.schedule_exists(&schedule_name).await?;
