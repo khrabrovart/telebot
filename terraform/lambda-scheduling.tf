@@ -106,7 +106,7 @@ resource "aws_cloudwatch_log_group" "scheduling_lambda_logs" {
   retention_in_days = 14
 }
 
-resource "aws_lambda_event_source_mapping" "dynamodb_stream" {
+resource "aws_lambda_event_source_mapping" "scheduling_dynamodb_stream" {
   event_source_arn                   = aws_dynamodb_table.posting_rules.stream_arn
   function_name                      = aws_lambda_function.scheduling_lambda.arn
   starting_position                  = "LATEST"

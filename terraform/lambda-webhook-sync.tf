@@ -105,7 +105,7 @@ resource "aws_cloudwatch_log_group" "webhook_sync_lambda_logs" {
   retention_in_days = 14
 }
 
-resource "aws_lambda_event_source_mapping" "dynamodb_stream" {
+resource "aws_lambda_event_source_mapping" "webhook_sync_dynamodb_stream" {
   event_source_arn                   = aws_dynamodb_table.bots.stream_arn
   function_name                      = aws_lambda_function.webhook_sync_lambda.arn
   starting_position                  = "LATEST"
