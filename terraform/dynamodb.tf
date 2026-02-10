@@ -12,9 +12,11 @@ resource "aws_dynamodb_table" "posting_rules" {
 }
 
 resource "aws_dynamodb_table" "bots" {
-  name         = "${local.app_name}-bots"
-  billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "Id"
+  name             = "${local.app_name}-bots"
+  billing_mode     = "PAY_PER_REQUEST"
+  hash_key         = "Id"
+  stream_enabled   = true
+  stream_view_type = "NEW_AND_OLD_IMAGES"
 
   attribute {
     name = "Id"
