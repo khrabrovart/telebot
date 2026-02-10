@@ -1,4 +1,4 @@
-use crate::{menu, TelegramBotClient};
+use crate::menu;
 use lambda_http::{Body, Error, Request, Response};
 use telebot_shared::{aws::DynamoDbClient, data::BotData};
 use teloxide::types::Update;

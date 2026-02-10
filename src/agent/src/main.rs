@@ -1,6 +1,5 @@
 use agent_lambda::handle;
 use lambda_http::{run, service_fn, Error};
-use tracing::info;
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
