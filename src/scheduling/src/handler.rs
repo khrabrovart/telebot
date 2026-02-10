@@ -3,7 +3,7 @@ use aws_lambda_events::event::dynamodb::Event;
 use lambda_runtime::{Error, LambdaEvent};
 use serde_dynamo;
 use telebot_shared::data::PostingRule;
-use tracing::warn;
+use tracing::info;
 
 pub async fn handle(event: LambdaEvent<Event>) -> Result<(), Error> {
     let (payload, _context) = event.into_parts();
@@ -13,21 +13,24 @@ pub async fn handle(event: LambdaEvent<Event>) -> Result<(), Error> {
     if let Some(record) = payload.records.first() {
         let action = StreamAction::from_event_name(&record.event_name);
 
+        info!(?record, "Received DynamoDB record");
+
         match action {
             StreamAction::Insert | StreamAction::Modify => {
+                info!(?record.change.new_image, "DynamoDB new_image before deserialization");
                 let posting_rule: PostingRule =
                     serde_dynamo::from_item(record.change.new_image.clone())?;
 
                 process_update(&posting_rule, &scheduler).await?;
             }
             StreamAction::Remove => {
+                info!(?record.change.old_image, "DynamoDB old_image before deserialization");
                 let posting_rule: PostingRule =
                     serde_dynamo::from_item(record.change.old_image.clone())?;
 
                 process_remove(&posting_rule, &scheduler).await?;
             }
             StreamAction::Unknown => {
-                warn!(event_name = %record.event_name, "Unknown event type, skipping");
                 return Err(format!("Unknown event type: {}", record.event_name).into());
             }
         }
