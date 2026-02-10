@@ -146,7 +146,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: ./src/webhook-sync
+        working-directory: ./src/webhook_sync
 
     steps:
       - name: Checkout
@@ -166,7 +166,7 @@ jobs:
       - name: Cache Dependencies
         uses: Swatinem/rust-cache@v2
         with:
-          workspaces: src/webhook-sync
+          workspaces: src/webhook_sync
 
       - name: Format
         run: cargo fmt --all -- --check
@@ -181,7 +181,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: webhook-sync-lambda
-          path: ./src/webhook-sync/target/lambda/webhook-sync-lambda/
+          path: ./src/webhook_sync/target/lambda/webhook-sync-lambda/
           retention-days: 1
 
   plan:
