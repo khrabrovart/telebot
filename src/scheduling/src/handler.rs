@@ -17,14 +17,12 @@ pub async fn handle(event: LambdaEvent<Event>) -> Result<(), Error> {
 
         match action {
             StreamAction::Insert | StreamAction::Modify => {
-                info!(?record.change.new_image, "DynamoDB new_image before deserialization");
                 let posting_rule: PostingRule =
                     serde_dynamo::from_item(record.change.new_image.clone())?;
 
                 process_update(&posting_rule, &scheduler).await?;
             }
             StreamAction::Remove => {
-                info!(?record.change.old_image, "DynamoDB old_image before deserialization");
                 let posting_rule: PostingRule =
                     serde_dynamo::from_item(record.change.old_image.clone())?;
 
