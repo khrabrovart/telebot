@@ -4,15 +4,12 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+anyhow = "1.0"
+lambda_runtime = "1.0.2"
+teloxide = { version = "0.17.0", default-features = false, features = [
+    "rustls",
+] }
 telebot-shared = { path = "../shared" }
-aws-config = { version = "1", features = ["behavior-version-latest"] }
-aws-sdk-dynamodb = "1"
-aws-sdk-ssm = "1"
-lambda_runtime = "0.13"
-serde = { version = "1.0", features = ["derive"] }
-serde_dynamo = { version = "4", features = ["aws-sdk-dynamodb+1"] }
-teloxide = { version = "0.14", default-features = false, features = ["rustls"] }
-thiserror = "2"
 tokio = { version = "1", features = ["macros"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }

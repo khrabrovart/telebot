@@ -1,47 +1,87 @@
-use crate::TelegramBotClient;
+use crate::telegram::TelegramBotClient;
 use lambda_runtime::{Error, LambdaEvent};
-use serde::Deserialize;
-use telebot_shared::{DynamoDbClient, Post, SsmClient};
-use tracing::{info, warn};
-
-#[derive(Debug, Deserialize)]
-pub struct SchedulerEvent {
-    pub posting_data_id: String,
-}
+use telebot_shared::{
+    aws::DynamoDbClient,
+    data::{BotData, PostingRule, PostingRuleContent, SchedulerEvent},
+};
+use teloxide::types::Recipient;
+use tracing::info;
 
 pub async fn handle(event: LambdaEvent<SchedulerEvent>) -> Result<(), Error> {
     let (payload, _context) = event.into_parts();
 
-    info!(posting_data_id = %payload.posting_data_id, "Received event");
+    info!(posting_rule_id = %payload.posting_rule_id, "Received event");
 
-    let table_name = std::env::var("POSTING_DATA_TABLE")
-        .expect("POSTING_DATA_TABLE environment variable not set");
+    let posting_rules_table_name = match std::env::var("POSTING_RULES_TABLE") {
+        Ok(val) => val,
+        Err(_) => {
+            return Err("POSTING_RULES_TABLE environment variable not set".into());
+        }
+    };
 
     let db = DynamoDbClient::new().await;
-    let post: Post = db.get_item(&table_name, &payload.posting_data_id).await?;
+    let posting_rule = db
+        .get_item::<PostingRule>(&posting_rules_table_name, &payload.posting_rule_id)
+        .await?;
+
+    let posting_rule = match posting_rule {
+        Some(rule) => rule,
+        None => {
+            return Err(format!("Posting rule not found: {}", payload.posting_rule_id).into());
+        }
+    };
 
     info!(
-        post_id = %post.id,
-        content = ?post.content,
-        is_active = post.is_active,
-        is_ready = post.is_ready,
-        "Post retrieved from DynamoDB"
+        post_id = %posting_rule.id,
+        content = ?posting_rule.content,
+        is_active = posting_rule.is_active,
+        is_ready = posting_rule.is_ready,
+        "Posting rule found"
     );
 
-    if !post.is_active {
-        warn!(post_id = %post.id, "Post is not active, skipping");
-        return Ok(());
+    if !posting_rule.is_valid() {
+        return Err(format!("Posting rule is misconfigured: {}", posting_rule.id).into());
     }
 
-    if !post.is_ready {
-        warn!(post_id = %post.id, "Post is not fully configured, skipping");
-        return Ok(());
+    if !posting_rule.is_active {
+        return Err(format!("Posting rule is not active: {}", posting_rule.id).into());
     }
 
-    let ssm = SsmClient::from_env().await?;
-    let bot_client = TelegramBotClient::from_ssm(&ssm).await?;
+    let bots_table_name = match std::env::var("BOTS_TABLE") {
+        Ok(val) => val,
+        Err(_) => {
+            return Err("BOTS_TABLE environment variable not set".into());
+        }
+    };
 
-    bot_client.send_post(&post).await?;
+    let bot_data = db
+        .get_item::<BotData>(&bots_table_name, &posting_rule.bot_id)
+        .await?;
+
+    let bot_data = match bot_data {
+        Some(data) => data,
+        None => {
+            return Err(format!("Bot data not found: {}", posting_rule.bot_id).into());
+        }
+    };
+
+    info!(bot_id = %bot_data.id, "Bot data found");
+
+    let bot = TelegramBotClient::new(&bot_data).await?;
+    run(&bot, &posting_rule).await?;
+
+    info!(post_id = %posting_rule.id, "Posting completed successfully");
 
     Ok(())
+}
+
+async fn run(bot: &TelegramBotClient, posting_rule: &PostingRule) -> Result<(), anyhow::Error> {
+    let chat_id: Recipient = posting_rule.chat_id.clone().into();
+
+    match &posting_rule.content {
+        PostingRuleContent::Text { text } => bot.send_text(chat_id, text).await,
+        PostingRuleContent::Poll { question, options } => {
+            bot.send_poll(chat_id, question, options).await
+        }
+    }
 }

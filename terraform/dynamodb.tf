@@ -1,5 +1,5 @@
-resource "aws_dynamodb_table" "posting_data" {
-  name             = "${local.app_name}-posting-data"
+resource "aws_dynamodb_table" "posting_rules" {
+  name             = "${local.app_name}-posting-rules"
   billing_mode     = "PAY_PER_REQUEST"
   hash_key         = "Id"
   stream_enabled   = true
@@ -11,13 +11,16 @@ resource "aws_dynamodb_table" "posting_data" {
   }
 }
 
-resource "aws_dynamodb_table" "users" {
-  name         = "${local.app_name}-users"
+resource "aws_dynamodb_table" "bots" {
+  name         = "${local.app_name}-bots"
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "Id"
 
   attribute {
     name = "Id"
     type = "S"
+  }
+  server_side_encryption {
+    enabled = true
   }
 }

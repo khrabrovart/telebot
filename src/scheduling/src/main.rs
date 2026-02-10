@@ -1,6 +1,5 @@
 use lambda_runtime::{service_fn, Error};
 use scheduling_lambda::handle;
-use tracing::info;
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
@@ -13,8 +12,6 @@ async fn main() -> Result<(), Error> {
         .with_target(false)
         .without_time()
         .init();
-
-    info!("Starting Scheduling Lambda");
 
     lambda_runtime::run(service_fn(handle)).await
 }

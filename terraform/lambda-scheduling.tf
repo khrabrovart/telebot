@@ -21,7 +21,7 @@ resource "aws_lambda_function" "scheduling_lambda" {
       TARGET_LAMBDA_ARN    = aws_lambda_function.posting_lambda.arn
       SCHEDULER_ROLE_ARN   = aws_iam_role.scheduler_role.arn
       SCHEDULER_GROUP_NAME = aws_scheduler_schedule_group.scheduler_group.name
-      SCHEDULE_PREFIX      = "${local.app_name}"
+      SCHEDULE_PREFIX      = "${local.app_name}-posting-"
     }
   }
 
@@ -63,7 +63,7 @@ resource "aws_iam_policy" "scheduling_lambda_policy" {
           "dynamodb:ListStreams"
         ]
         Resource = [
-          "${aws_dynamodb_table.posting_data.arn}/stream/*"
+          "${aws_dynamodb_table.posting_rules.arn}/stream/*"
         ]
       },
       {
@@ -107,9 +107,9 @@ resource "aws_cloudwatch_log_group" "scheduling_lambda_logs" {
 }
 
 resource "aws_lambda_event_source_mapping" "dynamodb_stream" {
-  event_source_arn                   = aws_dynamodb_table.posting_data.stream_arn
+  event_source_arn                   = aws_dynamodb_table.posting_rules.stream_arn
   function_name                      = aws_lambda_function.scheduling_lambda.arn
   starting_position                  = "LATEST"
-  batch_size                         = 10
+  batch_size                         = 1
   maximum_batching_window_in_seconds = 5
 }

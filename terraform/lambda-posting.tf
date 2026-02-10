@@ -18,8 +18,8 @@ resource "aws_lambda_function" "posting_lambda" {
 
   environment {
     variables = {
-      BOT_TOKEN_PARAMETER = aws_ssm_parameter.bot_token.name
-      POSTING_DATA_TABLE  = aws_dynamodb_table.posting_data.name
+      POSTING_RULES_TABLE = aws_dynamodb_table.posting_rules.name
+      BOTS_TABLE          = aws_dynamodb_table.bots.name
     }
   }
 
@@ -58,31 +58,10 @@ resource "aws_iam_policy" "posting_lambda_policy" {
           "dynamodb:GetItem"
         ]
         Resource = [
-          aws_dynamodb_table.posting_data.arn
+          aws_dynamodb_table.posting_rules.arn,
+          aws_dynamodb_table.bots.arn
         ]
       },
-      {
-        Effect = "Allow"
-        Action = [
-          "ssm:GetParameter",
-          "ssm:GetParameters"
-        ]
-        Resource = [
-          aws_ssm_parameter.bot_token.arn
-        ]
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "kms:Decrypt"
-        ]
-        Resource = "*"
-        Condition = {
-          StringEquals = {
-            "kms:ViaService" = "ssm.${data.aws_region.current.id}.amazonaws.com"
-          }
-        }
-      }
     ]
   })
 }

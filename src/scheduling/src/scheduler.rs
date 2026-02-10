@@ -1,31 +1,9 @@
+use anyhow::{anyhow, Error};
 use aws_sdk_scheduler::{
     types::{FlexibleTimeWindow, FlexibleTimeWindowMode, ScheduleState, Target},
     Client,
 };
-use serde::Serialize;
-use telebot_shared::Post;
-use thiserror::Error;
-use tracing::info;
-
-#[derive(Debug, Error)]
-pub enum SchedulerError {
-    #[error("Failed to create schedule: {0}")]
-    CreateScheduleFailed(String),
-
-    #[error("Failed to update schedule: {0}")]
-    UpdateScheduleFailed(String),
-
-    #[error("Failed to delete schedule: {0}")]
-    DeleteScheduleFailed(String),
-
-    #[error("Failed to get schedule: {0}")]
-    GetScheduleFailed(String),
-}
-
-#[derive(Debug, Serialize)]
-pub struct SchedulerPayload {
-    pub posting_data_id: String,
-}
+use telebot_shared::data::{posting_rule::PostingRule, SchedulerEvent};
 
 pub struct SchedulerClient {
     client: Client,
@@ -36,58 +14,61 @@ pub struct SchedulerClient {
 }
 
 impl SchedulerClient {
-    pub async fn new() -> Self {
+    pub async fn new() -> Result<Self, Error> {
         let target_lambda_arn = std::env::var("TARGET_LAMBDA_ARN")
-            .expect("TARGET_LAMBDA_ARN environment variable not set");
+            .map_err(|_| anyhow!("TARGET_LAMBDA_ARN environment variable not set"))?;
 
         let scheduler_role_arn = std::env::var("SCHEDULER_ROLE_ARN")
-            .expect("SCHEDULER_ROLE_ARN environment variable not set");
+            .map_err(|_| anyhow!("SCHEDULER_ROLE_ARN environment variable not set"))?;
 
         let group_name = std::env::var("SCHEDULER_GROUP_NAME")
-            .expect("SCHEDULER_GROUP_NAME environment variable not set");
+            .map_err(|_| anyhow!("SCHEDULER_GROUP_NAME environment variable not set"))?;
 
-        let schedule_prefix =
-            std::env::var("SCHEDULE_PREFIX").expect("SCHEDULE_PREFIX environment variable not set");
+        let schedule_prefix = std::env::var("SCHEDULE_PREFIX")
+            .map_err(|_| anyhow!("SCHEDULE_PREFIX environment variable not set"))?;
 
         let config = aws_config::load_from_env().await;
         let client = Client::new(&config);
 
-        Self {
+        Ok(Self {
             client,
             group_name,
             target_lambda_arn,
             scheduler_role_arn,
             schedule_prefix,
-        }
+        })
     }
 
-    fn schedule_name(&self, posting_id: &str) -> String {
-        format!("{}-posting-{}", self.schedule_prefix, posting_id)
+    fn schedule_name(&self, posting_rule_id: &str) -> String {
+        format!("{}{}", self.schedule_prefix, posting_rule_id)
     }
 
-    pub async fn create_or_update_schedule(&self, post: &Post) -> Result<(), SchedulerError> {
-        let schedule_name = self.schedule_name(&post.id);
-        let payload = SchedulerPayload {
-            posting_data_id: post.id.clone(),
+    pub async fn create_or_update_schedule(
+        &self,
+        posting_rule: &PostingRule,
+    ) -> Result<(), anyhow::Error> {
+        let schedule_name = self.schedule_name(&posting_rule.id);
+        let payload = SchedulerEvent {
+            posting_rule_id: posting_rule.id.clone(),
         };
-        let payload_json =
-            serde_json::to_string(&payload).expect("Failed to serialize scheduler payload");
+        let payload_json = serde_json::to_string(&payload)
+            .map_err(|_| anyhow!("Failed to serialize scheduler payload"))?;
 
         let target = Target::builder()
             .arn(&self.target_lambda_arn)
             .role_arn(&self.scheduler_role_arn)
             .input(payload_json)
             .build()
-            .expect("Failed to build target");
+            .map_err(|e| anyhow!("Failed to build target: {e}"))?;
 
         let flexible_time_window = FlexibleTimeWindow::builder()
             .mode(FlexibleTimeWindowMode::Off)
             .build()
-            .expect("Failed to build flexible time window");
+            .map_err(|_| anyhow!("Failed to build flexible time window"))?;
 
-        let schedule_expression = format!("cron({})", post.schedule.trim());
+        let schedule_expression = format!("cron({})", posting_rule.schedule.trim());
 
-        let state = if post.is_active {
+        let state = if posting_rule.is_active {
             ScheduleState::Enabled
         } else {
             ScheduleState::Disabled
@@ -96,61 +77,55 @@ impl SchedulerClient {
         let schedule_exists = self.schedule_exists(&schedule_name).await?;
 
         if schedule_exists {
-            info!(schedule_name = %schedule_name, "Updating existing schedule");
             self.client
                 .update_schedule()
                 .group_name(&self.group_name)
                 .name(&schedule_name)
                 .state(state)
                 .schedule_expression(&schedule_expression)
-                .schedule_expression_timezone(&post.timezone)
+                .schedule_expression_timezone(&posting_rule.timezone)
                 .target(target)
                 .flexible_time_window(flexible_time_window)
                 .send()
                 .await
-                .map_err(|e| SchedulerError::UpdateScheduleFailed(e.to_string()))?;
+                .map_err(|e| anyhow!(e.to_string()))?;
         } else {
-            info!(schedule_name = %schedule_name, "Creating new schedule");
             self.client
                 .create_schedule()
                 .group_name(&self.group_name)
                 .name(&schedule_name)
                 .state(state)
                 .schedule_expression(&schedule_expression)
-                .schedule_expression_timezone(&post.timezone)
+                .schedule_expression_timezone(&posting_rule.timezone)
                 .target(target)
                 .flexible_time_window(flexible_time_window)
                 .send()
                 .await
-                .map_err(|e| SchedulerError::CreateScheduleFailed(e.to_string()))?;
+                .map_err(|e| anyhow!(e.to_string()))?;
         }
 
-        info!(schedule_name = %schedule_name, schedule_expression = %schedule_expression, "Schedule configured successfully");
         Ok(())
     }
 
-    pub async fn delete_schedule(&self, posting_id: &str) -> Result<(), SchedulerError> {
-        let schedule_name = self.schedule_name(posting_id);
+    pub async fn delete_schedule(&self, posting_rule_id: &str) -> Result<(), Error> {
+        let schedule_name = self.schedule_name(posting_rule_id);
 
         if !self.schedule_exists(&schedule_name).await? {
-            info!(schedule_name = %schedule_name, "Schedule does not exist, nothing to delete");
             return Ok(());
         }
 
-        info!(schedule_name = %schedule_name, "Deleting schedule");
         self.client
             .delete_schedule()
             .group_name(&self.group_name)
             .name(&schedule_name)
             .send()
             .await
-            .map_err(|e| SchedulerError::DeleteScheduleFailed(e.to_string()))?;
+            .map_err(|e| anyhow!(e.to_string()))?;
 
-        info!(schedule_name = %schedule_name, "Schedule deleted successfully");
         Ok(())
     }
 
-    async fn schedule_exists(&self, schedule_name: &str) -> Result<bool, SchedulerError> {
+    async fn schedule_exists(&self, schedule_name: &str) -> Result<bool, Error> {
         match self
             .client
             .get_schedule()
@@ -165,7 +140,7 @@ impl SchedulerClient {
                 if service_error.is_resource_not_found_exception() {
                     Ok(false)
                 } else {
-                    Err(SchedulerError::GetScheduleFailed(service_error.to_string()))
+                    Err(anyhow!(service_error.to_string()))
                 }
             }
         }

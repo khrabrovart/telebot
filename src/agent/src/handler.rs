@@ -1,72 +1,57 @@
-use crate::TelegramBotClient;
+use crate::{menu, TelegramBotClient};
 use lambda_http::{Body, Error, Request, Response};
-use telebot_shared::SsmClient;
-use teloxide::{
-    payloads::{EditMessageTextSetters, SendMessageSetters},
-    prelude::Requester,
-    types::{InlineKeyboardButton, InlineKeyboardMarkup, Update, UpdateKind},
-};
+use telebot_shared::{aws::DynamoDbClient, data::BotData};
+use teloxide::types::Update;
+use tracing::{error, info};
 
 pub async fn handle(req: Request) -> Result<Response<Body>, Error> {
-    let ssm = SsmClient::from_env().await?;
-    let bot_client = TelegramBotClient::from_ssm(&ssm).await?;
-
-    let update: Update = serde_json::from_slice(req.body())?;
-
-    match update.kind {
-        UpdateKind::Message(msg) if msg.text() == Some("/start") => {
-            bot_client
-                .bot
-                .send_message(msg.chat.id, "🏠 Главное меню")
-                .reply_markup(main_menu())
-                .await?;
-        }
-        UpdateKind::CallbackQuery(q) => {
-            let chat_id = q.message.as_ref().map(|m| m.chat().id).unwrap();
-            let msg_id = q.message.as_ref().map(|m| m.id()).unwrap();
-
-            match q.data.as_deref() {
-                Some("settings") => {
-                    bot_client
-                        .bot
-                        .edit_message_text(chat_id, msg_id, "⚙️ Настройки")
-                        .reply_markup(settings_menu())
-                        .await?;
-                }
-                Some("back") => {
-                    bot_client
-                        .bot
-                        .edit_message_text(chat_id, msg_id, "🏠 Главное меню")
-                        .reply_markup(main_menu())
-                        .await?;
-                }
-                _ => {
-                    bot_client
-                        .bot
-                        .send_message(chat_id, "❓ Неизвестная команда")
-                        .await?;
-                }
-            }
-        }
-        _ => {}
+    if let Err(e) = handle_internal(req).await {
+        error!(error = %e, "Failed to handle request");
     }
 
     Ok(Response::builder().status(200).body(Body::Empty)?)
 }
 
-fn main_menu() -> InlineKeyboardMarkup {
-    InlineKeyboardMarkup::new(vec![vec![InlineKeyboardButton::callback(
-        "Настройки",
-        "settings",
-    )]])
-}
+async fn handle_internal(request: Request) -> Result<(), Error> {
+    let update = serde_json::from_slice::<Update>(request.body())?;
 
-fn settings_menu() -> InlineKeyboardMarkup {
-    InlineKeyboardMarkup::new(vec![
-        vec![
-            InlineKeyboardButton::callback("🔔 Звук", "sound"),
-            InlineKeyboardButton::callback("🌐 Язык", "lang"),
-        ],
-        vec![InlineKeyboardButton::callback("« Назад", "back")],
-    ])
+    info!(update = ?update, "Received update");
+
+    let db = DynamoDbClient::new().await;
+
+    let bot_id = match &update.kind {
+        teloxide::types::UpdateKind::Message(msg) => msg.chat.id.to_string(),
+        teloxide::types::UpdateKind::CallbackQuery(q) => q
+            .message
+            .as_ref()
+            .map(|m| m.chat().id.to_string())
+            .unwrap_or_default(),
+        _ => {
+            return Err("Unsupported update type".into());
+        }
+    };
+
+    let bots_table_name = match std::env::var("BOTS_TABLE") {
+        Ok(val) => val,
+        Err(_) => {
+            return Err("BOTS_TABLE environment variable not set".into());
+        }
+    };
+
+    let bot_data = db.get_item::<BotData>(&bots_table_name, &bot_id).await?;
+
+    let bot_data = match bot_data {
+        Some(data) => data,
+        None => {
+            return Err(format!("Bot data not found: {}", bot_id).into());
+        }
+    };
+
+    info!(bot_id = %bot_data.id, "Bot data found");
+
+    let bot = TelegramBotClient::new(&bot_data).await?;
+
+    menu::process_update(&update, &bot).await?;
+
+    Ok(())
 }

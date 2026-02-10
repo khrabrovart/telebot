@@ -2,82 +2,58 @@ use crate::{SchedulerClient, StreamAction};
 use aws_lambda_events::event::dynamodb::Event;
 use lambda_runtime::{Error, LambdaEvent};
 use serde_dynamo;
-use telebot_shared::Post;
-use tracing::{info, warn};
+use telebot_shared::data::PostingRule;
+use tracing::warn;
 
 pub async fn handle(event: LambdaEvent<Event>) -> Result<(), Error> {
     let (payload, _context) = event.into_parts();
 
-    let scheduler = SchedulerClient::new().await;
+    let scheduler = SchedulerClient::new().await?;
 
-    for record in payload.records {
-        let event_name = record.event_name.clone();
-        info!(event_name = %event_name, "Processing DynamoDB stream record");
-
-        let action = StreamAction::from_event_name(&event_name);
+    if let Some(record) = payload.records.get(0) {
+        let action = StreamAction::from_event_name(&record.event_name);
 
         match action {
             StreamAction::Insert | StreamAction::Modify => {
-                let new_image = match &record.change.new_image {
-                    image if image.is_empty() => {
-                        warn!("No new image found in record, skipping");
-                        continue;
-                    }
-                    image => image,
-                };
+                let posting_rule: PostingRule =
+                    serde_dynamo::from_item(record.change.new_image.clone())?;
 
-                let post: Result<Post, _> = serde_dynamo::from_item(new_image.clone());
-                let post = match post {
-                    Ok(post) => post,
-                    Err(e) => {
-                        warn!(error = %e, "Failed to parse post, skipping");
-                        continue;
-                    }
-                };
-
-                info!(
-                    id = %post.id,
-                    schedule = %post.schedule,
-                    is_active = post.is_active,
-                    is_ready = post.is_ready,
-                    "Parsed post"
-                );
-
-                // TODO: Add validation to ensure we have the necessary fields for scheduling
-                if !post.is_ready {
-                    scheduler.delete_schedule(&post.id).await?;
-                    continue;
-                }
-
-                info!(id = %post.id, "Creating/updating scheduler");
-                scheduler.create_or_update_schedule(&post).await?;
+                process_update(&posting_rule, &scheduler).await?;
             }
             StreamAction::Remove => {
-                let old_image = match &record.change.old_image {
-                    image if image.is_empty() => {
-                        warn!("No old image found in record, skipping");
-                        continue;
-                    }
-                    image => image,
-                };
+                let posting_rule: PostingRule =
+                    serde_dynamo::from_item(record.change.old_image.clone())?;
 
-                let post: Result<Post, _> = serde_dynamo::from_item(old_image.clone());
-                let post = match post {
-                    Ok(post) => post,
-                    Err(e) => {
-                        warn!(error = %e, "Failed to parse post from old image, skipping");
-                        continue;
-                    }
-                };
-
-                info!(id = %post.id, "Deleting scheduler for removed record");
-                scheduler.delete_schedule(&post.id).await?;
+                process_remove(&posting_rule, &scheduler).await?;
             }
             StreamAction::Unknown => {
-                warn!(event_name = %event_name, "Unknown event type, skipping");
+                warn!(event_name = %record.event_name, "Unknown event type, skipping");
+                return Err(format!("Unknown event type: {}", record.event_name).into());
             }
         }
     }
 
+    Ok(())
+}
+
+async fn process_update(
+    posting_rule: &PostingRule,
+    scheduler: &SchedulerClient,
+) -> Result<(), Error> {
+    if !posting_rule.is_valid() {
+        scheduler.delete_schedule(&posting_rule.id).await?;
+        return Ok(());
+    }
+
+    scheduler.create_or_update_schedule(posting_rule).await?;
+
+    Ok(())
+}
+
+async fn process_remove(
+    posting_rule: &PostingRule,
+    scheduler: &SchedulerClient,
+) -> Result<(), Error> {
+    scheduler.delete_schedule(&posting_rule.id).await?;
     Ok(())
 }

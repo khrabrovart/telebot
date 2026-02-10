@@ -14,7 +14,5 @@ async fn main() -> Result<(), Error> {
         .without_time()
         .init();
 
-    info!("Starting Agent Lambda");
-
     run(service_fn(handle)).await
 }
