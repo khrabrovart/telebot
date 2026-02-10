@@ -68,13 +68,12 @@ resource "aws_iam_policy" "webhook_sync_lambda_policy" {
       {
         Effect = "Allow"
         Action = [
-          "scheduler:GetSchedule",
-          "scheduler:CreateSchedule",
-          "scheduler:UpdateSchedule",
-          "scheduler:DeleteSchedule"
+          "apigateway:POST",
+          "apigateway:GET",
+          "apigateway:DELETE"
         ]
         Resource = [
-          "arn:aws:scheduler:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:schedule/${aws_scheduler_schedule_group.scheduler_group.name}/*"
+          "${aws_apigatewayv2_api.webhook_api.execution_arn}/*/*"
         ]
       },
       {
