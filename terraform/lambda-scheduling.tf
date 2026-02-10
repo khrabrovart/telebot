@@ -112,4 +112,5 @@ resource "aws_lambda_event_source_mapping" "dynamodb_stream" {
   starting_position                  = "LATEST"
   batch_size                         = 1
   maximum_batching_window_in_seconds = 5
+  maximum_retry_attempts             = 1
 }
