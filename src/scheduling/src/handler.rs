@@ -10,7 +10,7 @@ pub async fn handle(event: LambdaEvent<Event>) -> Result<(), Error> {
 
     let scheduler = SchedulerClient::new().await?;
 
-    if let Some(record) = payload.records.get(0) {
+    if let Some(record) = payload.records.first() {
         let action = StreamAction::from_event_name(&record.event_name);
 
         match action {

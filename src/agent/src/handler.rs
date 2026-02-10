@@ -49,9 +49,10 @@ async fn handle_internal(request: Request) -> Result<(), Error> {
 
     info!(bot_id = %bot_data.id, "Bot data found");
 
-    let bot = TelegramBotClient::new(&bot_data).await?;
+    //let bot = TelegramBotClient::new(&bot_data).await?;
 
-    menu::process_update(&update, &bot).await?;
+    // menu::process_update(&update, &bot).await?;
+    menu::process_update().await?;
 
     Ok(())
 }

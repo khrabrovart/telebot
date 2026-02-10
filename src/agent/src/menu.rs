@@ -1,13 +1,6 @@
 use anyhow::Error;
-use teloxide::{
-    payloads::{EditMessageTextSetters, SendMessageSetters},
-    prelude::Requester,
-    types::{InlineKeyboardButton, InlineKeyboardMarkup, Update, UpdateKind},
-};
 
-use crate::TelegramBotClient;
-
-pub async fn process_update(update: &Update, bot: &TelegramBotClient) -> Result<(), Error> {
+pub async fn process_update() -> Result<(), Error> {
     // match update.kind {
     //     UpdateKind::Message(msg) if msg.text() == Some("/start") => {
     //         bot_client
@@ -44,6 +37,7 @@ pub async fn process_update(update: &Update, bot: &TelegramBotClient) -> Result<
     Ok(())
 }
 
+/*
 fn main_menu() -> InlineKeyboardMarkup {
     InlineKeyboardMarkup::new(vec![vec![InlineKeyboardButton::callback(
         "Автопостинг",
@@ -63,3 +57,4 @@ fn list_rules_menu() -> InlineKeyboardMarkup {
         )],
     ])
 }
+*/
