@@ -46,7 +46,10 @@ impl TelegramBotClient {
             .map(|opt| InputPollOption::new(opt.clone()))
             .collect();
 
-        let mut msg = self.bot.send_poll(chat_id, question, poll_options);
+        let mut msg = self
+            .bot
+            .send_poll(chat_id, question, poll_options)
+            .is_anonymous(false);
 
         if let Some(topic_id) = topic_id {
             let thread_id = ThreadId(MessageId(topic_id.parse::<i32>()?));
