@@ -44,7 +44,12 @@ impl ApiGatewayClient {
             .target(format!("integrations/{}", self.integration_id))
             .send()
             .await
-            .map_err(|e| anyhow!("Failed to create API Gateway route: {}", e))?;
+            .map_err(|e| {
+                anyhow!(
+                    "Failed to create API Gateway route: {}",
+                    e.into_service_error()
+                )
+            })?;
 
         Ok(())
     }
@@ -58,7 +63,12 @@ impl ApiGatewayClient {
             .api_id(&self.api_id)
             .send()
             .await
-            .map_err(|e| anyhow!("Failed to get API Gateway routes: {}", e))?;
+            .map_err(|e| {
+                anyhow!(
+                    "Failed to get API Gateway routes: {}",
+                    e.into_service_error()
+                )
+            })?;
 
         if let Some(route) = routes
             .items()
@@ -72,7 +82,12 @@ impl ApiGatewayClient {
                     .route_id(route_id)
                     .send()
                     .await
-                    .map_err(|e| anyhow!("Failed to delete API Gateway route: {}", e))?;
+                    .map_err(|e| {
+                        anyhow!(
+                            "Failed to delete API Gateway route: {}",
+                            e.into_service_error()
+                        )
+                    })?;
             }
         }
         Ok(())
