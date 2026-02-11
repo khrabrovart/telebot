@@ -31,7 +31,7 @@ async fn handle_internal(request: Request) -> Result<(), Error> {
         }
     };
 
-    let bot_data = db.get_item::<BotData>(&bots_table_name, &bot_id).await?;
+    let bot_data = db.get_item::<BotData>(&bots_table_name, bot_id).await?;
 
     let bot_data = match bot_data {
         Some(data) => data,
