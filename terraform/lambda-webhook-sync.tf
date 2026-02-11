@@ -73,7 +73,8 @@ resource "aws_iam_policy" "webhook_sync_lambda_policy" {
           "apigateway:DELETE"
         ]
         Resource = [
-          "${aws_apigatewayv2_api.webhook_api.execution_arn}/*/*"
+          "arn:aws:apigateway:${data.aws_region.current.name}::/apis/${aws_apigatewayv2_api.webhook_api.id}",
+          "arn:aws:apigateway:${data.aws_region.current.name}::/apis/${aws_apigatewayv2_api.webhook_api.id}/*"
         ]
       }
     ]
