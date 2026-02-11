@@ -62,7 +62,7 @@ resource "aws_iam_policy" "webhook_sync_lambda_policy" {
           "dynamodb:ListStreams"
         ]
         Resource = [
-          "${aws_dynamodb_table.posting_rules.arn}/stream/*"
+          "${aws_dynamodb_table.bots.arn}/stream/*"
         ]
       },
       {
@@ -74,15 +74,6 @@ resource "aws_iam_policy" "webhook_sync_lambda_policy" {
         ]
         Resource = [
           "${aws_apigatewayv2_api.webhook_api.execution_arn}/*/*"
-        ]
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "iam:PassRole"
-        ]
-        Resource = [
-          aws_iam_role.scheduler_role.arn
         ]
       }
     ]
