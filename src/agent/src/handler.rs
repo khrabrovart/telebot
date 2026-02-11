@@ -13,23 +13,16 @@ pub async fn handle(req: Request) -> Result<Response<Body>, Error> {
 }
 
 async fn handle_internal(request: Request) -> Result<(), Error> {
+    info!(request = ?request, "Received request");
+
+    let path = request.uri().path();
+    let bot_id = path.rsplit('/').next().unwrap();
+
     let update = serde_json::from_slice::<Update>(request.body())?;
 
-    info!(update = ?update, "Received update");
+    info!(update = ?update, "Parsed update");
 
     let db = DynamoDbClient::new().await;
-
-    let bot_id = match &update.kind {
-        teloxide::types::UpdateKind::Message(msg) => msg.chat.id.to_string(),
-        teloxide::types::UpdateKind::CallbackQuery(q) => q
-            .message
-            .as_ref()
-            .map(|m| m.chat().id.to_string())
-            .unwrap_or_default(),
-        _ => {
-            return Err("Unsupported update type".into());
-        }
-    };
 
     let bots_table_name = match std::env::var("BOTS_TABLE") {
         Ok(val) => val,
