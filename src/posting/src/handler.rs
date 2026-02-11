@@ -1,4 +1,5 @@
 use crate::telegram::TelegramBotClient;
+use crate::REPLACEMENTS;
 use lambda_runtime::{Error, LambdaEvent};
 use telebot_shared::{
     aws::DynamoDbClient,
@@ -68,20 +69,32 @@ pub async fn handle(event: LambdaEvent<SchedulerEvent>) -> Result<(), Error> {
     info!(bot_id = %bot_data.id, "Bot data found");
 
     let bot = TelegramBotClient::new(&bot_data).await?;
-    run(&bot, &posting_rule).await?;
+    post(&bot, &posting_rule).await?;
 
     info!(post_id = %posting_rule.id, "Posting completed successfully");
 
     Ok(())
 }
 
-async fn run(bot: &TelegramBotClient, posting_rule: &PostingRule) -> Result<(), anyhow::Error> {
+fn replace_variables(text: &str) -> String {
+    let mut result = text.to_string();
+    for (key, func) in REPLACEMENTS.iter() {
+        result = result.replace(key, &func());
+    }
+    result
+}
+
+async fn post(bot: &TelegramBotClient, posting_rule: &PostingRule) -> Result<(), anyhow::Error> {
     let chat_id: Recipient = posting_rule.chat_id.clone().into();
 
     match &posting_rule.content {
-        PostingRuleContent::Text { text } => bot.send_text(chat_id, text).await,
+        PostingRuleContent::Text { text } => {
+            let replaced_text = replace_variables(text);
+            bot.send_text(chat_id, &replaced_text).await
+        }
         PostingRuleContent::Poll { question, options } => {
-            bot.send_poll(chat_id, question, options).await
+            let replaced_question = replace_variables(question);
+            bot.send_poll(chat_id, &replaced_question, options).await
         }
     }
 }
