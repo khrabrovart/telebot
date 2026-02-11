@@ -86,15 +86,16 @@ fn replace_variables(text: &str) -> String {
 
 async fn post(bot: &TelegramBotClient, posting_rule: &PostingRule) -> Result<(), anyhow::Error> {
     let chat_id: Recipient = posting_rule.chat_id.clone().into();
+    let topic_id = posting_rule.topic_id.clone();
 
     match &posting_rule.content {
         PostingRuleContent::Text { text } => {
-            let replaced_text = replace_variables(text);
-            bot.send_text(chat_id, &replaced_text).await
+            let text = replace_variables(text);
+            bot.send_text(chat_id, topic_id, &text).await
         }
         PostingRuleContent::Poll { question, options } => {
-            let replaced_question = replace_variables(question);
-            bot.send_poll(chat_id, &replaced_question, options).await
+            let question = replace_variables(question);
+            bot.send_poll(chat_id, topic_id, &question, options).await
         }
     }
 }

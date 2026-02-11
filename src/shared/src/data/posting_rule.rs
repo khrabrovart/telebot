@@ -21,6 +21,7 @@ pub struct PostingRule {
     pub id: String,
     pub bot_id: String,
     pub chat_id: String,
+    pub topic_id: Option<String>,
     pub content: PostingRuleContent,
     pub schedule: String,
     pub timezone: String,
@@ -37,6 +38,10 @@ impl PostingRule {
             && !self.chat_id.is_empty()
             && !self.schedule.is_empty()
             && !self.timezone.is_empty()
+            && match &self.topic_id {
+                Some(topic_id) => !topic_id.is_empty(),
+                None => true,
+            }
             && match &self.content {
                 PostingRuleContent::Text { text } => !text.is_empty(),
                 PostingRuleContent::Poll { question, options } => {

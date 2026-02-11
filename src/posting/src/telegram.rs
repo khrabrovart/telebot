@@ -1,7 +1,8 @@
 use telebot_shared::data::BotData;
 use teloxide::{
+    payloads::SendMessageSetters,
     prelude::*,
-    types::{InputPollOption, Recipient},
+    types::{InputPollOption, MessageId, Recipient, ThreadId},
 };
 
 pub struct TelegramBotClient {
@@ -15,8 +16,20 @@ impl TelegramBotClient {
         })
     }
 
-    pub async fn send_text(&self, chat_id: Recipient, text: &str) -> Result<(), anyhow::Error> {
-        self.bot.send_message(chat_id, text).await?;
+    pub async fn send_text(
+        &self,
+        chat_id: Recipient,
+        topic_id: Option<String>,
+        text: &str,
+    ) -> Result<(), anyhow::Error> {
+        let mut msg = self.bot.send_message(chat_id, text);
+
+        if let Some(topic_id) = topic_id {
+            let thread_id = ThreadId(MessageId(topic_id.parse::<i32>()?));
+            msg = msg.message_thread_id(thread_id);
+        }
+
+        msg.await?;
 
         Ok(())
     }
@@ -24,6 +37,7 @@ impl TelegramBotClient {
     pub async fn send_poll(
         &self,
         chat_id: Recipient,
+        topic_id: Option<String>,
         question: &str,
         options: &[String],
     ) -> Result<(), anyhow::Error> {
@@ -32,7 +46,14 @@ impl TelegramBotClient {
             .map(|opt| InputPollOption::new(opt.clone()))
             .collect();
 
-        self.bot.send_poll(chat_id, question, poll_options).await?;
+        let mut msg = self.bot.send_poll(chat_id, question, poll_options);
+
+        if let Some(topic_id) = topic_id {
+            let thread_id = ThreadId(MessageId(topic_id.parse::<i32>()?));
+            msg = msg.message_thread_id(thread_id);
+        }
+
+        msg.await?;
 
         Ok(())
     }
