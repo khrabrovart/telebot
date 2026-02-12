@@ -48,7 +48,7 @@ pub async fn process_update(
             let posting_rules = db.get_all::<PostingRule>(&posting_rules_table_name).await?;
             let filtered_rules: Vec<PostingRule> = posting_rules
                 .iter()
-                .filter(|rule| rule.bot_id == bot.bot_id)
+                .filter(|posting_rule| posting_rule.bot_id == bot.bot_id)
                 .cloned()
                 .collect();
 
@@ -61,13 +61,13 @@ pub async fn process_update(
             .await?;
         }
         "rule_details" => {
-            let rule_id = params[0];
+            let posting_rule_id = params[0];
 
             let posting_rule = db
-                .get_item::<PostingRule>(&posting_rules_table_name, rule_id)
+                .get_item::<PostingRule>(&posting_rules_table_name, posting_rule_id)
                 .await?;
 
-            let rule = match posting_rule {
+            let posting_rule = match posting_rule {
                 Some(r) => r,
                 None => {
                     bot.send_text(chat_id.clone(), "Правило не найдено").await?;
@@ -75,7 +75,7 @@ pub async fn process_update(
                 }
             };
 
-            let formatted_rule = formatter::format_rule(&rule);
+            let formatted_rule = formatter::format_rule(&posting_rule);
 
             bot.edit_message_text_with_markup(
                 chat_id.clone(),
@@ -110,15 +110,19 @@ fn main_menu() -> InlineKeyboardMarkup {
 }
 
 fn list_rules_menu(posting_rules: &[PostingRule]) -> InlineKeyboardMarkup {
-    InlineKeyboardMarkup::new(vec![
-        posting_rules
-            .iter()
-            .map(|rule| {
-                InlineKeyboardButton::callback(rule.id.clone(), format!("rule_details:{}", rule.id))
-            })
-            .collect(),
-        vec![InlineKeyboardButton::callback("< Назад", "back")],
-    ])
+    let mut buttons: Vec<Vec<InlineKeyboardButton>> = posting_rules
+        .iter()
+        .map(|posting_rule| {
+            vec![InlineKeyboardButton::callback(
+                posting_rule.name.clone(),
+                format!("rule_details:{}", posting_rule.id),
+            )]
+        })
+        .collect();
+
+    buttons.push(vec![InlineKeyboardButton::callback("< Назад", "back")]);
+
+    InlineKeyboardMarkup::new(buttons)
 }
 
 fn rule_details_menu() -> InlineKeyboardMarkup {
