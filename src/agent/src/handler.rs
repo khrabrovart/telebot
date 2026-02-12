@@ -46,7 +46,11 @@ async fn handle_internal(request: Request) -> Result<(), Error> {
     info!(bot_id = %bot_data.id, "Bot data found");
 
     let bot = TelegramBotClient::new(&bot_data).await?;
-    let chat_id: Recipient = update.chat_id().unwrap().as_user().unwrap().into();
+
+    let chat_id = match update.chat_id().unwrap().as_user() {
+        Some(user) => Recipient::from(user),
+        None => return Ok(()),
+    };
 
     let sender_id = update
         .from()
