@@ -3,7 +3,10 @@ use aws_sdk_scheduler::{
     types::{FlexibleTimeWindow, FlexibleTimeWindowMode, ScheduleState, Target},
     Client,
 };
-use telebot_shared::data::{posting_rule::PostingRule, SchedulerEvent};
+use telebot_shared::{
+    aws::errors::map_aws_error,
+    data::{posting_rule::PostingRule, SchedulerEvent},
+};
 
 pub struct SchedulerClient {
     client: Client,
@@ -88,7 +91,7 @@ impl SchedulerClient {
                 .flexible_time_window(flexible_time_window)
                 .send()
                 .await
-                .map_err(|e| anyhow!(e.to_string()))?;
+                .map_err(map_aws_error)?;
         } else {
             self.client
                 .create_schedule()
@@ -101,7 +104,7 @@ impl SchedulerClient {
                 .flexible_time_window(flexible_time_window)
                 .send()
                 .await
-                .map_err(|e| anyhow!(e.to_string()))?;
+                .map_err(map_aws_error)?;
         }
 
         Ok(())
@@ -120,7 +123,7 @@ impl SchedulerClient {
             .name(&schedule_name)
             .send()
             .await
-            .map_err(|e| anyhow!(e.to_string()))?;
+            .map_err(map_aws_error)?;
 
         Ok(())
     }

@@ -3,12 +3,8 @@ use telebot_shared::data::{PostingRule, PostingRuleContent};
 pub fn format_rule(posting_rule: &PostingRule, chat_name: &str) -> String {
     let name = &posting_rule.name;
 
-    let chat_name = if posting_rule.topic_id.is_some() {
-        format!(
-            "{} (топик #{})",
-            chat_name,
-            posting_rule.topic_id.as_ref().unwrap()
-        )
+    let chat_name = if let Some(topic_id) = &posting_rule.topic_id {
+        format!("{} (топик #{})", chat_name, topic_id)
     } else {
         chat_name.to_string()
     };

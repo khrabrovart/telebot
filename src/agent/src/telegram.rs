@@ -2,7 +2,7 @@ use anyhow::Error;
 use telebot_shared::data::BotData;
 use teloxide::{
     prelude::*,
-    types::{Chat, InlineKeyboardMarkup, MessageId, ParseMode, Recipient, ThreadId},
+    types::{InlineKeyboardMarkup, MessageId, ParseMode, Recipient},
 };
 
 pub struct TelegramBotClient {
