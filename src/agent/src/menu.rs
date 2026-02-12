@@ -13,17 +13,14 @@ pub async fn process_update(
 ) -> Result<(), Error> {
     let chat_id: Recipient = update.chat_id().unwrap().as_user().unwrap().into();
 
-    match &update.kind {
-        UpdateKind::Message(msg) => match msg.text() {
-            Some("/start") => {
-                bot.send_text_with_markup(chat_id.clone(), "Главное меню", &main_menu())
-                    .await?;
-
-                return Ok(());
-            }
-            _ => return Ok(()),
-        },
-        _ => {}
+    if let UpdateKind::Message(msg) = &update.kind {
+        if let Some("/start") = msg.text() {
+            bot.send_text_with_markup(chat_id.clone(), "Главное меню", &main_menu())
+                .await?;
+            return Ok(());
+        } else {
+            return Ok(());
+        }
     }
 
     let query = match &update.kind {
@@ -112,10 +109,7 @@ fn list_rules_menu(posting_rules: &[PostingRule]) -> InlineKeyboardMarkup {
         posting_rules
             .iter()
             .map(|rule| {
-                InlineKeyboardButton::callback(
-                    rule.id.clone(),
-                    &format!("rule_details:{}", rule.id),
-                )
+                InlineKeyboardButton::callback(rule.id.clone(), format!("rule_details:{}", rule.id))
             })
             .collect(),
         vec![InlineKeyboardButton::callback("< Назад", "back")],

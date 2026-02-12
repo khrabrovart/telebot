@@ -1,4 +1,4 @@
-use chrono::{Datelike, Duration, Local, Weekday};
+use chrono::{Datelike, Duration, Weekday};
 
 pub fn get_next_date(target: Weekday, related_to: chrono::NaiveDate) -> chrono::NaiveDate {
     let days_until = (target.num_days_from_monday() as i32

@@ -15,7 +15,6 @@ pub fn format_rule(posting_rule: &PostingRule) -> String {
     let text = match &posting_rule.content {
         PostingRuleContent::Text { text } => text,
         PostingRuleContent::Poll { question, options } => {
-            let question = question;
             let options = options
                 .iter()
                 .map(|opt| format!("- {}", opt))
