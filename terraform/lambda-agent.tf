@@ -18,7 +18,8 @@ resource "aws_lambda_function" "agent_lambda" {
 
   environment {
     variables = {
-      BOTS_TABLE = aws_dynamodb_table.bots.name
+      POSTING_RULES_TABLE = aws_dynamodb_table.posting_rules.name
+      BOTS_TABLE          = aws_dynamodb_table.bots.name
     }
   }
 

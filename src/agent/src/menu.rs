@@ -1,5 +1,5 @@
 use crate::{formatter, TelegramBotClient};
-use anyhow::Error;
+use anyhow::{anyhow, Error};
 use telebot_shared::{aws::DynamoDbClient, data::PostingRule};
 use teloxide::{
     dispatching::dialogue::GetChatId,
@@ -40,9 +40,12 @@ pub async fn process_update(
 
     let message_id = query.message.as_ref().unwrap().id();
 
+    let posting_rules_table_name = std::env::var("POSTING_RULES_TABLE")
+        .map_err(|_| anyhow!("POSTING_RULES_TABLE environment variable not set"))?;
+
     match command {
         "list_rules" => {
-            let posting_rules = db.get_all::<PostingRule>("posting_rules").await?;
+            let posting_rules = db.get_all::<PostingRule>(&posting_rules_table_name).await?;
             let filtered_rules: Vec<PostingRule> = posting_rules
                 .iter()
                 .filter(|rule| rule.bot_id == bot.bot_id)
@@ -60,7 +63,9 @@ pub async fn process_update(
         "rule_details" => {
             let rule_id = params[0];
 
-            let posting_rule = db.get_item::<PostingRule>("posting_rules", rule_id).await?;
+            let posting_rule = db
+                .get_item::<PostingRule>(&posting_rules_table_name, rule_id)
+                .await?;
 
             let rule = match posting_rule {
                 Some(r) => r,
