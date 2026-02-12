@@ -21,7 +21,7 @@ impl TelegramBotClient {
         let text = Self::escape_chars(text);
         self.bot
             .send_message(chat_id, text)
-            .parse_mode(ParseMode::MarkdownV2)
+            .parse_mode(ParseMode::Html)
             .await?;
 
         Ok(())
@@ -37,7 +37,7 @@ impl TelegramBotClient {
         self.bot
             .send_message(chat_id, text)
             .reply_markup(markup.clone())
-            .parse_mode(ParseMode::MarkdownV2)
+            .parse_mode(ParseMode::Html)
             .await?;
 
         Ok(())
@@ -54,7 +54,7 @@ impl TelegramBotClient {
         self.bot
             .edit_message_text(chat_id, message_id, text)
             .reply_markup(markup.clone())
-            .parse_mode(ParseMode::MarkdownV2)
+            .parse_mode(ParseMode::Html)
             .await?;
 
         Ok(())
@@ -62,7 +62,10 @@ impl TelegramBotClient {
 
     fn escape_chars(text: &str) -> String {
         let mut result = text.to_string();
-        result = result.replace("{", "\\{").replace("}", "\\}");
+        result = result
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace("&", "&amp;");
         result
     }
 }

@@ -28,7 +28,7 @@ impl TelegramBotClient {
         let mut request = self
             .bot
             .send_message(chat_id, text)
-            .parse_mode(ParseMode::MarkdownV2);
+            .parse_mode(ParseMode::Html);
 
         if let Some(topic_id) = topic_id {
             let thread_id = ThreadId(MessageId(topic_id.parse::<i32>()?));
@@ -82,7 +82,10 @@ impl TelegramBotClient {
 
     fn escape_chars(text: &str) -> String {
         let mut result = text.to_string();
-        result = result.replace("{", "\\{").replace("}", "\\}");
+        result = result
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace("&", "&amp;");
         result
     }
 }
