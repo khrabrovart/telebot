@@ -1,16 +1,18 @@
 use telebot_shared::data::BotData;
 use teloxide::{
     prelude::*,
-    types::{InputPollOption, Recipient},
+    types::{InlineKeyboardMarkup, MessageId, Recipient},
 };
 
 pub struct TelegramBotClient {
+    pub bot_id: String,
     bot: Bot,
 }
 
 impl TelegramBotClient {
     pub async fn new(bot_data: &BotData) -> Result<Self, anyhow::Error> {
         Ok(Self {
+            bot_id: bot_data.id.clone(),
             bot: Bot::new(bot_data.token.clone()),
         })
     }
@@ -21,18 +23,31 @@ impl TelegramBotClient {
         Ok(())
     }
 
-    pub async fn send_poll(
+    pub async fn send_text_with_markup(
         &self,
         chat_id: Recipient,
-        question: &str,
-        options: &[String],
+        text: &str,
+        markup: &InlineKeyboardMarkup,
     ) -> Result<(), anyhow::Error> {
-        let poll_options: Vec<InputPollOption> = options
-            .iter()
-            .map(|opt| InputPollOption::new(opt.clone()))
-            .collect();
+        self.bot
+            .send_message(chat_id, text)
+            .reply_markup(markup.clone())
+            .await?;
 
-        self.bot.send_poll(chat_id, question, poll_options).await?;
+        Ok(())
+    }
+
+    pub async fn edit_message_text_with_markup(
+        &self,
+        chat_id: Recipient,
+        message_id: MessageId,
+        text: &str,
+        markup: &InlineKeyboardMarkup,
+    ) -> Result<(), anyhow::Error> {
+        self.bot
+            .edit_message_text(chat_id, message_id, text)
+            .reply_markup(markup.clone())
+            .await?;
 
         Ok(())
     }

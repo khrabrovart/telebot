@@ -33,4 +33,23 @@ impl DynamoDbClient {
             Ok(None)
         }
     }
+
+    pub async fn get_all<T: DeserializeOwned>(&self, table_name: &str) -> Result<Vec<T>, Error> {
+        let result = self
+            .client
+            .scan()
+            .table_name(table_name)
+            .send()
+            .await
+            .map_err(|e| anyhow!(e.to_string()))?;
+
+        let items = result
+            .items
+            .unwrap_or_default()
+            .into_iter()
+            .map(|item| serde_dynamo::from_item(item))
+            .collect::<Result<Vec<T>, _>>()?;
+
+        Ok(items)
+    }
 }

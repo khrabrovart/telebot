@@ -22,20 +22,21 @@ pub struct PostingRule {
     pub bot_id: String,
     pub chat_id: String,
     pub topic_id: Option<String>,
+    pub name: String,
     pub content: PostingRuleContent,
     pub schedule: String,
     pub timezone: String,
     #[serde(default)]
-    pub is_active: bool,
+    pub should_pin: bool,
     #[serde(default)]
-    pub is_ready: bool,
+    pub is_active: bool,
 }
 
 impl PostingRule {
     pub fn is_valid(&self) -> bool {
-        self.is_ready
-            && !self.bot_id.is_empty()
+        !self.bot_id.is_empty()
             && !self.chat_id.is_empty()
+            && !self.name.is_empty()
             && !self.schedule.is_empty()
             && !self.timezone.is_empty()
             && match &self.topic_id {

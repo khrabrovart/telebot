@@ -1,4 +1,3 @@
-// generate according to usages
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]

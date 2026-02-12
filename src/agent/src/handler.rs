@@ -1,7 +1,10 @@
-use crate::menu;
+use crate::{menu, TelegramBotClient};
 use lambda_http::{Body, Error, Request, Response};
 use telebot_shared::{aws::DynamoDbClient, data::BotData};
-use teloxide::types::Update;
+use teloxide::{
+    dispatching::dialogue::GetChatId,
+    types::{Recipient, Update},
+};
 use tracing::{error, info};
 
 pub async fn handle(req: Request) -> Result<Response<Body>, Error> {
@@ -42,10 +45,25 @@ async fn handle_internal(request: Request) -> Result<(), Error> {
 
     info!(bot_id = %bot_data.id, "Bot data found");
 
-    //let bot = TelegramBotClient::new(&bot_data).await?;
+    let bot = TelegramBotClient::new(&bot_data).await?;
+    let chat_id: Recipient = update.chat_id().unwrap().as_user().unwrap().into();
 
-    // menu::process_update(&update, &bot).await?;
-    menu::process_update().await?;
+    let sender_id = update.from().map(|u| u.id.to_string()).unwrap();
+
+    info!(sender_id = ?sender_id, "Sender ID extracted");
+
+    let admins = bot_data.admins;
+
+    if !admins.contains(&sender_id) {
+        bot.send_text(
+            chat_id,
+            "У вас недостаточно прав для выполнения этого действия",
+        )
+        .await?;
+        return Ok(());
+    }
+
+    menu::process_update(&update, &bot, &db).await?;
 
     Ok(())
 }

@@ -1,4 +1,4 @@
-use agent_lambda::handle;
+use agent_lambda::handler;
 use lambda_http::{run, service_fn, Error};
 
 #[tokio::main]
@@ -13,5 +13,5 @@ async fn main() -> Result<(), Error> {
         .without_time()
         .init();
 
-    run(service_fn(handle)).await
+    run(service_fn(handler::handle)).await
 }

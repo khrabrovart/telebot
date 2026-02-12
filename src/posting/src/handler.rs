@@ -36,7 +36,6 @@ pub async fn handle(event: LambdaEvent<SchedulerEvent>) -> Result<(), Error> {
         post_id = %posting_rule.id,
         content = ?posting_rule.content,
         is_active = posting_rule.is_active,
-        is_ready = posting_rule.is_ready,
         "Posting rule found"
     );
 
@@ -91,11 +90,25 @@ async fn post(bot: &TelegramBotClient, posting_rule: &PostingRule) -> Result<(),
     match &posting_rule.content {
         PostingRuleContent::Text { text } => {
             let text = replace_variables(text);
-            bot.send_text(chat_id, topic_id, &text).await
+            let message_id = bot.send_text(chat_id.clone(), topic_id, &text).await?;
+
+            if posting_rule.should_pin {
+                bot.pin_message(chat_id.clone(), message_id).await?;
+            }
+
+            Ok(())
         }
         PostingRuleContent::Poll { question, options } => {
             let question = replace_variables(question);
-            bot.send_poll(chat_id, topic_id, &question, options).await
+            let message_id = bot
+                .send_poll(chat_id.clone(), topic_id, &question, options)
+                .await?;
+
+            if posting_rule.should_pin {
+                bot.pin_message(chat_id.clone(), message_id).await?;
+            }
+
+            Ok(())
         }
     }
 }
