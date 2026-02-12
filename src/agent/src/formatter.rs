@@ -28,7 +28,7 @@ pub fn format_rule(posting_rule: &PostingRule) -> String {
     let schedule = format_schedule(&posting_rule.schedule);
 
     let formatted_rule = format!(
-        "**{}**\n\nСтатус: {}\n\n{}\n\n{}",
+        "**{}**\n\nСтатус: **{}**\n\n{}\n\n{}",
         name, status, text, schedule
     );
 
@@ -59,9 +59,18 @@ fn format_schedule(schedule: &str) -> String {
     };
 
     format!(
-        "Расписание\n**{} в {}:{}**\n\nСледующие публикации\n{}\n{}\n{}",
-        day_of_week_str, hours, minutes, next_post_1, next_post_2, next_post_3
+        "**Расписание**\n{} в {}:{}\n\nСледующие публикации\n{}\n{}\n{}",
+        day_of_week_str,
+        hours,
+        minutes,
+        format_date(next_post_1, hours, minutes),
+        format_date(next_post_2, hours, minutes),
+        format_date(next_post_3, hours, minutes)
     )
+}
+
+fn format_date(date: NaiveDate, hours: &str, minutes: &str) -> String {
+    format!("- {} в {}:{}", date.format("%d.%m.%Y"), hours, minutes)
 }
 
 fn map_day_of_week_str(day: &str) -> String {

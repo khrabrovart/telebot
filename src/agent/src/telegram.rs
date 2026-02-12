@@ -1,7 +1,7 @@
 use telebot_shared::data::BotData;
 use teloxide::{
     prelude::*,
-    types::{InlineKeyboardMarkup, MessageId, Recipient},
+    types::{InlineKeyboardMarkup, MessageId, ParseMode, Recipient},
 };
 
 pub struct TelegramBotClient {
@@ -18,7 +18,10 @@ impl TelegramBotClient {
     }
 
     pub async fn send_text(&self, chat_id: Recipient, text: &str) -> Result<(), anyhow::Error> {
-        self.bot.send_message(chat_id, text).await?;
+        self.bot
+            .send_message(chat_id, text)
+            .parse_mode(ParseMode::MarkdownV2)
+            .await?;
 
         Ok(())
     }
@@ -32,6 +35,7 @@ impl TelegramBotClient {
         self.bot
             .send_message(chat_id, text)
             .reply_markup(markup.clone())
+            .parse_mode(ParseMode::MarkdownV2)
             .await?;
 
         Ok(())
@@ -47,6 +51,7 @@ impl TelegramBotClient {
         self.bot
             .edit_message_text(chat_id, message_id, text)
             .reply_markup(markup.clone())
+            .parse_mode(ParseMode::MarkdownV2)
             .await?;
 
         Ok(())

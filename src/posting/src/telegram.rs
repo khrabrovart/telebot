@@ -2,7 +2,7 @@ use telebot_shared::data::BotData;
 use teloxide::{
     payloads::SendMessageSetters,
     prelude::*,
-    types::{InputPollOption, MessageId, Recipient, ThreadId},
+    types::{InputPollOption, MessageId, ParseMode, Recipient, ThreadId},
 };
 
 pub struct TelegramBotClient {
@@ -24,7 +24,10 @@ impl TelegramBotClient {
         topic_id: Option<String>,
         text: &str,
     ) -> Result<MessageId, anyhow::Error> {
-        let mut request = self.bot.send_message(chat_id, text);
+        let mut request = self
+            .bot
+            .send_message(chat_id, text)
+            .parse_mode(ParseMode::MarkdownV2);
 
         if let Some(topic_id) = topic_id {
             let thread_id = ThreadId(MessageId(topic_id.parse::<i32>()?));
