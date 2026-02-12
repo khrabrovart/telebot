@@ -48,7 +48,10 @@ async fn handle_internal(request: Request) -> Result<(), Error> {
     let bot = TelegramBotClient::new(&bot_data).await?;
     let chat_id: Recipient = update.chat_id().unwrap().as_user().unwrap().into();
 
-    let sender_id = update.from().map(|u| u.id.to_string()).unwrap();
+    let sender_id = update
+        .from()
+        .map(|u| u.username.as_ref().unwrap().clone())
+        .unwrap();
 
     info!(sender_id = ?sender_id, "Sender ID extracted");
 
