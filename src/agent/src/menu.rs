@@ -1,9 +1,6 @@
 use crate::{formatter, TelegramBotClient};
 use anyhow::{anyhow, Error};
-use telebot_shared::{
-    aws::DynamoDbClient,
-    data::{posting_rule, PostingRule},
-};
+use telebot_shared::{aws::DynamoDbClient, data::PostingRule};
 use teloxide::{
     dispatching::dialogue::GetChatId,
     types::{InlineKeyboardButton, InlineKeyboardMarkup, Recipient, Update, UpdateKind},
