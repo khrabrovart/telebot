@@ -18,6 +18,7 @@ impl TelegramBotClient {
     }
 
     pub async fn send_text(&self, chat_id: Recipient, text: &str) -> Result<(), anyhow::Error> {
+        let text = Self::escape_chars(text);
         self.bot
             .send_message(chat_id, text)
             .parse_mode(ParseMode::MarkdownV2)
@@ -32,6 +33,7 @@ impl TelegramBotClient {
         text: &str,
         markup: &InlineKeyboardMarkup,
     ) -> Result<(), anyhow::Error> {
+        let text = Self::escape_chars(text);
         self.bot
             .send_message(chat_id, text)
             .reply_markup(markup.clone())
@@ -48,6 +50,7 @@ impl TelegramBotClient {
         text: &str,
         markup: &InlineKeyboardMarkup,
     ) -> Result<(), anyhow::Error> {
+        let text = Self::escape_chars(text);
         self.bot
             .edit_message_text(chat_id, message_id, text)
             .reply_markup(markup.clone())
@@ -55,5 +58,11 @@ impl TelegramBotClient {
             .await?;
 
         Ok(())
+    }
+
+    fn escape_chars(text: &str) -> String {
+        let mut result = text.to_string();
+        result = result.replace("{", "\\{").replace("}", "\\}");
+        result
     }
 }

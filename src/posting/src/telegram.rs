@@ -24,6 +24,7 @@ impl TelegramBotClient {
         topic_id: Option<String>,
         text: &str,
     ) -> Result<MessageId, anyhow::Error> {
+        let text = Self::escape_chars(text);
         let mut request = self
             .bot
             .send_message(chat_id, text)
@@ -77,5 +78,11 @@ impl TelegramBotClient {
             .await?;
 
         Ok(())
+    }
+
+    fn escape_chars(text: &str) -> String {
+        let mut result = text.to_string();
+        result = result.replace("{", "\\{").replace("}", "\\}");
+        result
     }
 }
