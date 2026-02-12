@@ -55,7 +55,12 @@ resource "aws_iam_policy" "agent_lambda_policy" {
       {
         Effect = "Allow"
         Action = [
-          "dynamodb:GetItem"
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:UpdateItem",
+          "dynamodb:DeleteItem",
+          "dynamodb:Scan",
+          "dynamodb:Query"
         ]
         Resource = [
           aws_dynamodb_table.posting_rules.arn,
