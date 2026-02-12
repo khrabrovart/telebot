@@ -1,7 +1,4 @@
-use chrono::{Local, NaiveDate, Weekday};
 use telebot_shared::data::{PostingRule, PostingRuleContent};
-
-use crate::date_utils;
 
 pub fn format_rule(posting_rule: &PostingRule) -> String {
     let name = &posting_rule.name;
@@ -40,40 +37,12 @@ fn format_schedule(schedule: &str) -> String {
 
     let minutes = parts[0];
     let hours = parts[1];
-    let day_of_week_str = map_day_of_week_str(parts[4]);
+    let day_of_week = map_day_of_week(parts[4]);
 
-    let (next_post_1, next_post_2, next_post_3) = match map_day_of_week(parts[4]) {
-        Some(day_of_week) => {
-            let now = Local::now().date_naive();
-            let np1 = date_utils::get_next_date(day_of_week, now);
-            let np2 = date_utils::get_next_date(day_of_week, np1);
-            let np3 = date_utils::get_next_date(day_of_week, np2);
-
-            (np1, np2, np3)
-        }
-        None => {
-            let dummy = NaiveDate::from_ymd_opt(1970, 1, 1).unwrap();
-
-            (dummy, dummy, dummy)
-        }
-    };
-
-    format!(
-        "<b>Расписание</b>\n{} в {}:{}\n\nСледующие публикации\n{}\n{}\n{}",
-        day_of_week_str,
-        hours,
-        minutes,
-        format_date(next_post_1, hours, minutes),
-        format_date(next_post_2, hours, minutes),
-        format_date(next_post_3, hours, minutes)
-    )
+    format!("<b>Расписание</b>\n{} в {}:{}", day_of_week, hours, minutes,)
 }
 
-fn format_date(date: NaiveDate, hours: &str, minutes: &str) -> String {
-    format!("- {} в {}:{}", date.format("%d.%m.%Y"), hours, minutes)
-}
-
-fn map_day_of_week_str(day: &str) -> String {
+fn map_day_of_week(day: &str) -> String {
     match day {
         "1" => "Каждое воскресенье",
         "2" => "Каждый понедельник",
@@ -82,21 +51,8 @@ fn map_day_of_week_str(day: &str) -> String {
         "5" => "Каждый четверг",
         "6" => "Каждую пятницу",
         "7" => "Каждую субботу",
-        "*" => "Каждый день",
+        "?" => "Каждый день",
         _ => "INVALID_DAY",
     }
     .to_string()
-}
-
-fn map_day_of_week(day: &str) -> Option<Weekday> {
-    match day {
-        "1" => Some(Weekday::Sun),
-        "2" => Some(Weekday::Mon),
-        "3" => Some(Weekday::Tue),
-        "4" => Some(Weekday::Wed),
-        "5" => Some(Weekday::Thu),
-        "6" => Some(Weekday::Fri),
-        "7" => Some(Weekday::Sat),
-        _ => None,
-    }
 }
