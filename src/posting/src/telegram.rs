@@ -68,7 +68,10 @@ impl TelegramBotClient {
         chat_id: Recipient,
         message_id: MessageId,
     ) -> Result<(), anyhow::Error> {
-        self.bot.pin_chat_message(chat_id, message_id).await?;
+        self.bot
+            .pin_chat_message(chat_id, message_id)
+            .disable_notification(true)
+            .await?;
 
         Ok(())
     }

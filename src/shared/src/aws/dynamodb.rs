@@ -1,6 +1,8 @@
-use anyhow::{anyhow, Error};
+use anyhow::Error;
 use aws_sdk_dynamodb::{types::AttributeValue as AwsAttributeValue, Client};
 use serde::de::DeserializeOwned;
+
+use crate::aws::errors::map_aws_error;
 
 pub struct DynamoDbClient {
     client: Client,
@@ -25,7 +27,7 @@ impl DynamoDbClient {
             .key("Id", AwsAttributeValue::S(id.to_string()))
             .send()
             .await
-            .map_err(|e| anyhow!(e.to_string()))?;
+            .map_err(map_aws_error)?;
 
         if let Some(item) = result.item {
             Ok(Some(serde_dynamo::from_item(item)?))
@@ -41,7 +43,7 @@ impl DynamoDbClient {
             .table_name(table_name)
             .send()
             .await
-            .map_err(|e| anyhow!(e.to_string()))?;
+            .map_err(map_aws_error)?;
 
         let items = result
             .items

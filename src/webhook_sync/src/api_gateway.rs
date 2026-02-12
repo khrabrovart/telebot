@@ -1,5 +1,6 @@
 use anyhow::{anyhow, Error};
 use aws_sdk_apigatewayv2::Client;
+use telebot_shared::aws::errors::map_aws_error;
 
 pub struct ApiGatewayClient {
     client: Client,
@@ -63,12 +64,7 @@ impl ApiGatewayClient {
             .api_id(&self.api_id)
             .send()
             .await
-            .map_err(|e| {
-                anyhow!(
-                    "Failed to get API Gateway routes: {}",
-                    e.into_service_error()
-                )
-            })?;
+            .map_err(map_aws_error)?;
 
         if let Some(route) = routes
             .items()
@@ -82,12 +78,7 @@ impl ApiGatewayClient {
                     .route_id(route_id)
                     .send()
                     .await
-                    .map_err(|e| {
-                        anyhow!(
-                            "Failed to delete API Gateway route: {}",
-                            e.into_service_error()
-                        )
-                    })?;
+                    .map_err(map_aws_error)?;
             }
         }
         Ok(())
