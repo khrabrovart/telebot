@@ -1,7 +1,8 @@
+use anyhow::Error;
 use telebot_shared::data::BotData;
 use teloxide::{
     prelude::*,
-    types::{InlineKeyboardMarkup, MessageId, ParseMode, Recipient},
+    types::{Chat, InlineKeyboardMarkup, MessageId, ParseMode, Recipient, ThreadId},
 };
 
 pub struct TelegramBotClient {
@@ -10,14 +11,14 @@ pub struct TelegramBotClient {
 }
 
 impl TelegramBotClient {
-    pub async fn new(bot_data: &BotData) -> Result<Self, anyhow::Error> {
+    pub async fn new(bot_data: &BotData) -> Result<Self, Error> {
         Ok(Self {
             bot_id: bot_data.id.clone(),
             bot: Bot::new(bot_data.token.clone()),
         })
     }
 
-    pub async fn send_text(&self, chat_id: Recipient, text: &str) -> Result<(), anyhow::Error> {
+    pub async fn send_text(&self, chat_id: Recipient, text: &str) -> Result<(), Error> {
         self.bot
             .send_message(chat_id, text)
             .parse_mode(ParseMode::Html)
@@ -31,7 +32,7 @@ impl TelegramBotClient {
         chat_id: Recipient,
         text: &str,
         markup: &InlineKeyboardMarkup,
-    ) -> Result<(), anyhow::Error> {
+    ) -> Result<(), Error> {
         self.bot
             .send_message(chat_id, text)
             .reply_markup(markup.clone())
@@ -47,7 +48,7 @@ impl TelegramBotClient {
         message_id: MessageId,
         text: &str,
         markup: &InlineKeyboardMarkup,
-    ) -> Result<(), anyhow::Error> {
+    ) -> Result<(), Error> {
         self.bot
             .edit_message_text(chat_id, message_id, text)
             .reply_markup(markup.clone())
@@ -55,5 +56,13 @@ impl TelegramBotClient {
             .await?;
 
         Ok(())
+    }
+
+    pub async fn get_chat_title(&self, chat_id: Recipient) -> Result<String, Error> {
+        let chat = self.bot.get_chat(chat_id).await?;
+        Ok(chat
+            .title()
+            .unwrap_or_else(|| chat.username().unwrap_or("Unknown"))
+            .into())
     }
 }

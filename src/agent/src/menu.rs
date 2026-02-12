@@ -75,7 +75,9 @@ pub async fn process_update(
                 }
             };
 
-            let formatted_rule = formatter::format_rule(&posting_rule);
+            let chat_name = bot.get_chat_title(chat_id.clone()).await?;
+
+            let formatted_rule = formatter::format_rule(&posting_rule, &chat_name);
 
             bot.edit_message_text_with_markup(
                 chat_id.clone(),

@@ -1,7 +1,17 @@
 use telebot_shared::data::{PostingRule, PostingRuleContent};
 
-pub fn format_rule(posting_rule: &PostingRule) -> String {
+pub fn format_rule(posting_rule: &PostingRule, chat_name: &str) -> String {
     let name = &posting_rule.name;
+
+    let chat_name = if posting_rule.topic_id.is_some() {
+        format!(
+            "{} (топик #{})",
+            chat_name,
+            posting_rule.topic_id.as_ref().unwrap()
+        )
+    } else {
+        chat_name.to_string()
+    };
 
     let status = if posting_rule.is_active {
         "ВКЛЮЧЕНО"
@@ -22,36 +32,42 @@ pub fn format_rule(posting_rule: &PostingRule) -> String {
         }
     };
 
-    let schedule = format_schedule(&posting_rule.schedule);
+    let schedule = format_schedule(&posting_rule.schedule, &posting_rule.timezone);
+
+    let will_pin = if posting_rule.should_pin {
+        "Есть"
+    } else {
+        "Нет"
+    };
 
     let formatted_rule = format!(
-        "<b>{}</b>\n\nСтатус: <b>{}</b>\n\n{}\n\n{}",
-        name, status, text, schedule
+        "<b>{}</b>\n\nКанал: <b>{}</b>\nРасписание: <b>{}</b>\nЗакрепление: <b>{}</b>\nСтатус: <b>{}</b>\n\n{}",
+        name, chat_name, schedule, will_pin, status, text
     );
 
     formatted_rule
 }
 
-fn format_schedule(schedule: &str) -> String {
+fn format_schedule(schedule: &str, timezone: &str) -> String {
     let parts: Vec<&str> = schedule.split_whitespace().collect();
 
     let minutes = parts[0];
     let hours = parts[1];
     let day_of_week = map_day_of_week(parts[4]);
 
-    format!("<b>Расписание</b>\n{} в {}:{}", day_of_week, hours, minutes,)
+    format!("{} в {}:{} ({})", day_of_week, hours, minutes, timezone)
 }
 
 fn map_day_of_week(day: &str) -> String {
     match day {
-        "1" => "Каждое воскресенье",
-        "2" => "Каждый понедельник",
-        "3" => "Каждый вторник",
-        "4" => "Каждую среду",
-        "5" => "Каждый четверг",
-        "6" => "Каждую пятницу",
-        "7" => "Каждую субботу",
-        "?" => "Каждый день",
+        "1" => "каждое воскресенье",
+        "2" => "каждый понедельник",
+        "3" => "каждый вторник",
+        "4" => "каждую среду",
+        "5" => "каждый четверг",
+        "6" => "каждую пятницу",
+        "7" => "каждую субботу",
+        "?" => "каждый день",
         _ => "INVALID_DAY",
     }
     .to_string()
