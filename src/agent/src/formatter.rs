@@ -10,9 +10,9 @@ pub fn format_rule(posting_rule: &PostingRule, chat_name: &str) -> String {
     };
 
     let status = if posting_rule.is_active {
-        "ВКЛЮЧЕНО"
+        "🟢 ВКЛЮЧЕНО"
     } else {
-        "ВЫКЛЮЧЕНО"
+        "🔴 ВЫКЛЮЧЕНО"
     };
 
     let text = match &posting_rule.content {
@@ -20,7 +20,7 @@ pub fn format_rule(posting_rule: &PostingRule, chat_name: &str) -> String {
         PostingRuleContent::Poll { question, options } => {
             let options = options
                 .iter()
-                .map(|opt| format!("- {}", opt))
+                .map(|opt| format!("🔘 {}", opt))
                 .collect::<Vec<_>>()
                 .join("\n");
 
@@ -31,9 +31,9 @@ pub fn format_rule(posting_rule: &PostingRule, chat_name: &str) -> String {
     let schedule = format_schedule(&posting_rule.schedule, &posting_rule.timezone);
 
     let will_pin = if posting_rule.should_pin {
-        "Есть"
+        "✅"
     } else {
-        "Нет"
+        "❌"
     };
 
     let formatted_rule = format!(

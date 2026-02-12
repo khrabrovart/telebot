@@ -15,7 +15,7 @@ pub async fn process_update(
 
     if let UpdateKind::Message(msg) = &update.kind {
         if let Some("/start") = msg.text() {
-            bot.send_text_with_markup(chat_id.clone(), "Главное меню", &main_menu())
+            bot.send_text_with_markup(chat_id.clone(), "🏠 Главное меню", &main_menu())
                 .await?;
             return Ok(());
         } else {
@@ -55,7 +55,7 @@ pub async fn process_update(
             bot.edit_message_text_with_markup(
                 chat_id.clone(),
                 message_id,
-                "Список правил",
+                "📋 Список правил",
                 &list_rules_menu(&filtered_rules),
             )
             .await?;
@@ -160,7 +160,7 @@ pub async fn process_update(
             bot.edit_message_text_with_markup(
                 chat_id.clone(),
                 message_id,
-                "Главное меню",
+                "🏠 Главное меню",
                 &main_menu(),
             )
             .await?;
@@ -173,7 +173,7 @@ pub async fn process_update(
 
 fn main_menu() -> InlineKeyboardMarkup {
     InlineKeyboardMarkup::new(vec![vec![InlineKeyboardButton::callback(
-        "Список правил",
+        "📋 Список правил",
         "list_rules",
     )]])
 }
@@ -189,7 +189,7 @@ fn list_rules_menu(posting_rules: &[PostingRule]) -> InlineKeyboardMarkup {
         })
         .collect();
 
-    buttons.push(vec![InlineKeyboardButton::callback("< Назад", "back")]);
+    buttons.push(vec![InlineKeyboardButton::callback("⬅️ Назад", "back")]);
 
     InlineKeyboardMarkup::new(buttons)
 }
@@ -197,18 +197,18 @@ fn list_rules_menu(posting_rules: &[PostingRule]) -> InlineKeyboardMarkup {
 fn rule_details_menu(posting_rule: &PostingRule) -> InlineKeyboardMarkup {
     let action = if posting_rule.is_active {
         vec![InlineKeyboardButton::callback(
-            "Выключить",
+            "🔴 Выключить",
             format!("deactivate_rule:{}", posting_rule.id),
         )]
     } else {
         vec![InlineKeyboardButton::callback(
-            "Включить",
+            "🟢 Включить",
             format!("activate_rule:{}", posting_rule.id),
         )]
     };
 
     InlineKeyboardMarkup::new(vec![
         action,
-        vec![InlineKeyboardButton::callback("< Назад", "back")],
+        vec![InlineKeyboardButton::callback("⬅️ Назад", "back")],
     ])
 }
