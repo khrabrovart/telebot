@@ -4,7 +4,7 @@ pub fn format_rule(posting_rule: &PostingRule, chat_name: &str) -> String {
     let name = &posting_rule.name;
 
     let chat_name = if let Some(topic_id) = &posting_rule.topic_id {
-        format!("{} (топик #{})", chat_name, topic_id)
+        format!("{} (топик {})", chat_name, topic_id)
     } else {
         chat_name.to_string()
     };
