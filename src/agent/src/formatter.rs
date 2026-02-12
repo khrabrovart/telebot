@@ -28,7 +28,7 @@ pub fn format_rule(posting_rule: &PostingRule) -> String {
     let schedule = format_schedule(&posting_rule.schedule);
 
     let formatted_rule = format!(
-        "**{}**\n\nСтатус: **{}**\n\n{}\n\n{}",
+        "<b>{}</b>\n\nСтатус: <b>{}</b>\n\n{}\n\n{}",
         name, status, text, schedule
     );
 
@@ -59,7 +59,7 @@ fn format_schedule(schedule: &str) -> String {
     };
 
     format!(
-        "**Расписание**\n{} в {}:{}\n\nСледующие публикации\n{}\n{}\n{}",
+        "<b>Расписание</b>\n{} в {}:{}\n\nСледующие публикации\n{}\n{}\n{}",
         day_of_week_str,
         hours,
         minutes,
