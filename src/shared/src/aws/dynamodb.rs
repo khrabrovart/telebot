@@ -54,4 +54,22 @@ impl DynamoDbClient {
 
         Ok(items)
     }
+
+    pub async fn put_item<T: serde::Serialize>(
+        &self,
+        table_name: &str,
+        item: &T,
+    ) -> Result<(), Error> {
+        let item = serde_dynamo::to_item(item)?;
+
+        self.client
+            .put_item()
+            .table_name(table_name)
+            .set_item(Some(item))
+            .send()
+            .await
+            .map_err(map_aws_error)?;
+
+        Ok(())
+    }
 }

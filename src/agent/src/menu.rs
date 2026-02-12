@@ -1,6 +1,9 @@
 use crate::{formatter, TelegramBotClient};
 use anyhow::{anyhow, Error};
-use telebot_shared::{aws::DynamoDbClient, data::PostingRule};
+use telebot_shared::{
+    aws::DynamoDbClient,
+    data::{posting_rule, PostingRule},
+};
 use teloxide::{
     dispatching::dialogue::GetChatId,
     types::{InlineKeyboardButton, InlineKeyboardMarkup, Recipient, Update, UpdateKind},
@@ -84,7 +87,73 @@ pub async fn process_update(
                 chat_id.clone(),
                 message_id,
                 &formatted_rule,
-                &rule_details_menu(),
+                &rule_details_menu(&posting_rule),
+            )
+            .await?;
+        }
+        "activate_rule" => {
+            let posting_rule_id = params[0];
+
+            let posting_rule = db
+                .get_item::<PostingRule>(&posting_rules_table_name, posting_rule_id)
+                .await?;
+
+            let mut posting_rule = match posting_rule {
+                Some(r) => r,
+                None => {
+                    bot.send_text(chat_id.clone(), "Правило не найдено").await?;
+                    return Ok(());
+                }
+            };
+
+            posting_rule.is_active = true;
+
+            db.put_item(&posting_rules_table_name, &posting_rule)
+                .await?;
+
+            let posting_rules_chat_id: Recipient = posting_rule.chat_id.clone().into();
+            let chat_name = bot.get_chat_title(posting_rules_chat_id).await?;
+
+            let formatted_rule = formatter::format_rule(&posting_rule, &chat_name);
+
+            bot.edit_message_text_with_markup(
+                chat_id.clone(),
+                message_id,
+                &formatted_rule,
+                &rule_details_menu(&posting_rule),
+            )
+            .await?;
+        }
+        "deactivate_rule" => {
+            let posting_rule_id = params[0];
+
+            let posting_rule = db
+                .get_item::<PostingRule>(&posting_rules_table_name, posting_rule_id)
+                .await?;
+
+            let mut posting_rule = match posting_rule {
+                Some(r) => r,
+                None => {
+                    bot.send_text(chat_id.clone(), "Правило не найдено").await?;
+                    return Ok(());
+                }
+            };
+
+            posting_rule.is_active = false;
+
+            db.put_item(&posting_rules_table_name, &posting_rule)
+                .await?;
+
+            let posting_rules_chat_id: Recipient = posting_rule.chat_id.clone().into();
+            let chat_name = bot.get_chat_title(posting_rules_chat_id).await?;
+
+            let formatted_rule = formatter::format_rule(&posting_rule, &chat_name);
+
+            bot.edit_message_text_with_markup(
+                chat_id.clone(),
+                message_id,
+                &formatted_rule,
+                &rule_details_menu(&posting_rule),
             )
             .await?;
         }
@@ -128,9 +197,21 @@ fn list_rules_menu(posting_rules: &[PostingRule]) -> InlineKeyboardMarkup {
     InlineKeyboardMarkup::new(buttons)
 }
 
-fn rule_details_menu() -> InlineKeyboardMarkup {
-    InlineKeyboardMarkup::new(vec![vec![InlineKeyboardButton::callback(
-        "< Назад",
-        "back",
-    )]])
+fn rule_details_menu(posting_rule: &PostingRule) -> InlineKeyboardMarkup {
+    let action = if posting_rule.is_active {
+        vec![InlineKeyboardButton::callback(
+            "Выключить",
+            format!("deactivate_rule:{}", posting_rule.id),
+        )]
+    } else {
+        vec![InlineKeyboardButton::callback(
+            "Включить",
+            format!("activate_rule:{}", posting_rule.id),
+        )]
+    };
+
+    InlineKeyboardMarkup::new(vec![
+        action,
+        vec![InlineKeyboardButton::callback("< Назад", "back")],
+    ])
 }
