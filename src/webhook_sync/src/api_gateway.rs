@@ -7,6 +7,7 @@ pub struct ApiGatewayClient {
     api_id: String,
     integration_id: String,
     route_prefix: String,
+    region: String,
 }
 
 impl ApiGatewayClient {
@@ -28,6 +29,7 @@ impl ApiGatewayClient {
             api_id,
             integration_id,
             route_prefix,
+            region: config.region().map(|r| r.as_ref().to_string()).unwrap(),
         })
     }
 
@@ -35,10 +37,11 @@ impl ApiGatewayClient {
         format!("POST {}{}", self.route_prefix, bot_id)
     }
 
-    pub async fn create_route(&self, bot_id: &str) -> Result<(), anyhow::Error> {
+    pub async fn create_route(&self, bot_id: &str) -> Result<String, anyhow::Error> {
         let route_key = self.route_key(bot_id);
 
-        self.client
+        let response = self
+            .client
             .create_route()
             .api_id(&self.api_id)
             .route_key(&route_key)
@@ -52,7 +55,15 @@ impl ApiGatewayClient {
                 )
             })?;
 
-        Ok(())
+        let route_key = response.route_key().unwrap_or_default();
+        let path = route_key.split_whitespace().last().unwrap_or("/");
+
+        let full_url = format!(
+            "https://{}.execute-api.{}.amazonaws.com/{}",
+            self.api_id, self.region, path
+        );
+
+        Ok(full_url)
     }
 
     pub async fn delete_route(&self, bot_id: &str) -> Result<(), Error> {
