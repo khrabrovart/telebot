@@ -166,7 +166,7 @@ async fn post_poll_action_log_message(
 
     let message = bot.send_text(chat_id, topic_id, &text).await?;
 
-    return Ok(message);
+    Ok(message)
 }
 
 async fn create_poll_action_log(
