@@ -77,7 +77,11 @@ pub async fn process_poll_answer(
     let actor_first_name = poll_answer.voter.user().unwrap().first_name.clone();
     let actor_last_name = poll_answer.voter.user().unwrap().last_name.clone();
     let actor_username = poll_answer.voter.user().unwrap().username.clone();
-    let action = poll_options[poll_answer.option_ids[0] as usize].clone();
+    let action = if poll_answer.option_ids.len() > 0 {
+        poll_options[poll_answer.option_ids[0] as usize].clone()
+    } else {
+        "<b>Голос отозван</b>".to_string()
+    };
     let timestamp = chrono::Utc::now().to_rfc3339();
 
     let action_record = PollActionLogRecord {
@@ -144,7 +148,7 @@ async fn update_poll_action_log_message(
                         .with_timezone(&tz)
                         .format("%d.%m.%Y %H:%M:%S");
 
-                    format!("<b>{} :</b> {}", date, action.action)
+                    format!("{} \\> {}", date, action.action)
                 })
                 .collect::<Vec<String>>()
                 .join("\n");
