@@ -1,6 +1,9 @@
 use crate::{formatter, TelegramBotClient};
 use anyhow::{anyhow, Error};
-use telebot_shared::{aws::DynamoDbClient, data::PostingRule};
+use telebot_shared::{
+    aws::DynamoDbClient,
+    data::{BotData, PostingRule},
+};
 use teloxide::{
     dispatching::dialogue::GetChatId,
     types::{InlineKeyboardButton, InlineKeyboardMarkup, Recipient, Update, UpdateKind},
@@ -8,12 +11,24 @@ use teloxide::{
 
 pub async fn process_update(
     update: &Update,
-    bot: &TelegramBotClient,
+    bot_data: &BotData,
     db: &DynamoDbClient,
 ) -> Result<(), Error> {
-    let chat_id: Recipient = update.chat_id().unwrap().as_user().unwrap().into();
+    let bot = TelegramBotClient::new(&bot_data).await?;
 
     if let UpdateKind::Message(msg) = &update.kind {
+        let chat_id: Recipient = match update.chat_id().unwrap().as_user() {
+            Some(user) => user.into(),
+            None => {
+                return Ok(());
+            }
+        };
+
+        match validate_access(update, chat_id.clone(), bot_data, &bot).await? {
+            true => (),
+            false => return Ok(()),
+        }
+
         if let Some("/start") = msg.text() {
             bot.send_text_with_markup(chat_id.clone(), "🏠 Главное меню", &main_menu())
                 .await?;
@@ -23,10 +38,28 @@ pub async fn process_update(
         }
     }
 
+    if let UpdateKind::PollAnswer(answer) = &update.kind {
+        // Handle poll answer if needed
+
+        return Ok(());
+    }
+
     let query = match &update.kind {
         UpdateKind::CallbackQuery(q) => q,
         _ => return Ok(()),
     };
+
+    let chat_id: Recipient = match update.chat_id().unwrap().as_user() {
+        Some(user) => user.into(),
+        None => {
+            return Ok(());
+        }
+    };
+
+    match validate_access(update, chat_id.clone(), bot_data, &bot).await? {
+        true => (),
+        false => return Ok(()),
+    }
 
     let parts = query
         .data
@@ -179,6 +212,32 @@ pub async fn process_update(
     }
 
     Ok(())
+}
+
+async fn validate_access(
+    update: &Update,
+    chat_id: Recipient,
+    bot_data: &BotData,
+    bot: &TelegramBotClient,
+) -> Result<bool, Error> {
+    let sender_id = update
+        .from()
+        .map(|u| u.username.as_ref().unwrap().clone())
+        .unwrap();
+
+    let admins = &bot_data.admins;
+
+    if !admins.contains(&sender_id) {
+        bot.send_text(
+            chat_id,
+            "У вас недостаточно прав для выполнения этого действия",
+        )
+        .await?;
+
+        return Ok(false);
+    }
+
+    Ok(true)
 }
 
 fn main_menu() -> InlineKeyboardMarkup {
