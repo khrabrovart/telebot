@@ -160,7 +160,7 @@ async fn post_poll_action_log_message(
     let topic_id = action_log.topic_id.clone();
 
     let text = format!(
-            "<b>Лог событий для опроса по правилу</b>\n{}\n\n{}\n\nЗдесь будут отображаться действия с данным опросом",
+            "<b>Лог событий для опроса по правилу</b>\n{}\n\n{}\n\n<i>Здесь будут отображаться действия с данным опросом</i>",
             posting_rule.name, message_text
         );
 
