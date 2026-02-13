@@ -106,7 +106,14 @@ async fn update_poll_action_log_message(
     posting_rule: &PostingRule,
     bot: &TelegramBotClient,
 ) -> Result<(), Error> {
-    let chat_id: Recipient = poll_action_log.posting_rule_id.clone().into();
+    let chat_id: Recipient = posting_rule
+        .poll_action_log
+        .as_ref()
+        .unwrap()
+        .chat_id
+        .clone()
+        .into();
+
     let message_id: MessageId = MessageId(poll_action_log.action_log_message_id);
 
     let mut grouped_actions: HashMap<u64, Vec<PollActionLogRecord>> = HashMap::new();
