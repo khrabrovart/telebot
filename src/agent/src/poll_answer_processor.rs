@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use anyhow::Error;
+use chrono_tz::Tz;
 use telebot_shared::{
     aws::DynamoDbClient,
     data::{poll_action_log::PollActionLogRecord, PollActionLog, PostingRule, PostingRuleContent},
@@ -121,7 +122,7 @@ async fn update_poll_action_log_message(
         .values()
         .map(|actions| {
             let actor_name = format!(
-                "{} {} (@{})",
+                "<b>{} {} (@{})</b>",
                 actions[0].actor_first_name,
                 actions[0].actor_last_name.clone().unwrap_or_default(),
                 actions[0].actor_username.clone().unwrap_or_default()
@@ -129,11 +130,19 @@ async fn update_poll_action_log_message(
 
             let actions_list = actions
                 .iter()
-                .map(|action| format!("{} at {}", action.action, action.timestamp))
+                .map(|action| {
+                    let tz: Tz = poll_action_log.timezone.parse().unwrap();
+                    let date = chrono::DateTime::parse_from_rfc3339(&action.timestamp)
+                        .unwrap()
+                        .with_timezone(&tz)
+                        .format("%d.%m.%Y %H:%M:%S");
+
+                    format!("<b>{} :</b> {}", date, action.action)
+                })
                 .collect::<Vec<String>>()
                 .join("\n");
 
-            format!("{}:\n{}", actor_name, actions_list)
+            format!("{}\n{}", actor_name, actions_list)
         })
         .collect::<Vec<String>>()
         .join("\n\n");

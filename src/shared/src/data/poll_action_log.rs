@@ -8,6 +8,7 @@ pub struct PollActionLog {
     pub action_log_message_id: i32,
     pub text: String,
     pub actions: Vec<PollActionLogRecord>,
+    pub timezone: String,
     pub version: u64,
 }
 

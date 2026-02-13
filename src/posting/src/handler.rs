@@ -130,7 +130,7 @@ async fn post_message(
 
                     create_poll_action_log(
                         message.poll().unwrap().id.clone(),
-                        &posting_rule.id,
+                        posting_rule,
                         poll_action_log_message.id,
                         &question,
                         db,
@@ -171,7 +171,7 @@ async fn post_poll_action_log_message(
 
 async fn create_poll_action_log(
     poll_id: PollId,
-    posting_rule_id: &str,
+    posting_rule: &PostingRule,
     action_log_message_id: MessageId,
     text: &str,
     db: &DynamoDbClient,
@@ -187,10 +187,11 @@ async fn create_poll_action_log(
 
     let poll_action_log = PollActionLog {
         id: poll_id.to_string(),
-        posting_rule_id: posting_rule_id.to_string(),
+        posting_rule_id: posting_rule.id.to_string(),
         action_log_message_id: action_log_message_id.0,
         text: text.to_string(),
         actions: vec![],
+        timezone: posting_rule.timezone.clone(),
         version: 1,
     };
 
