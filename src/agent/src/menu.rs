@@ -28,6 +28,8 @@ pub async fn process_update(
         _ => return Ok(()),
     };
 
+    bot.answer_callback_query(query.id.clone()).await?;
+
     let parts = query
         .data
         .as_deref()

@@ -2,7 +2,7 @@ use anyhow::Error;
 use telebot_shared::data::BotData;
 use teloxide::{
     prelude::*,
-    types::{InlineKeyboardMarkup, MessageId, ParseMode, Recipient},
+    types::{CallbackQueryId, InlineKeyboardMarkup, MessageId, ParseMode, Recipient},
 };
 
 pub struct TelegramBotClient {
@@ -64,5 +64,18 @@ impl TelegramBotClient {
             .title()
             .unwrap_or_else(|| chat.username().unwrap_or("Unknown"))
             .into())
+    }
+
+    pub async fn answer_callback_query(
+        &self,
+        callback_query_id: CallbackQueryId,
+    ) -> Result<(), Error> {
+        self.bot
+            .answer_callback_query(callback_query_id)
+            .text("Обработано")
+            .show_alert(false)
+            .await?;
+
+        Ok(())
     }
 }
