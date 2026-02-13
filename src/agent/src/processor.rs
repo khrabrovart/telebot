@@ -14,7 +14,7 @@ pub async fn process_update(
     bot_data: &BotData,
     db: &DynamoDbClient,
 ) -> Result<(), Error> {
-    let bot = TelegramBotClient::new(&bot_data).await?;
+    let bot = TelegramBotClient::new(bot_data).await?;
 
     if let UpdateKind::Message(msg) = &update.kind {
         let chat_id: Recipient = match update.chat_id().unwrap().as_user() {
@@ -38,7 +38,7 @@ pub async fn process_update(
         }
     }
 
-    if let UpdateKind::PollAnswer(answer) = &update.kind {
+    if let UpdateKind::PollAnswer(_) = &update.kind {
         // Handle poll answer if needed
 
         return Ok(());
