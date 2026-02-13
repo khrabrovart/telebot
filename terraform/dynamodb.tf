@@ -26,3 +26,14 @@ resource "aws_dynamodb_table" "bots" {
     enabled = true
   }
 }
+
+resource "aws_dynamodb_table" "polls_action_log" {
+  name         = "${local.app_name}-polls-action-log"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "Id"
+
+  attribute {
+    name = "Id"
+    type = "S"
+  }
+}

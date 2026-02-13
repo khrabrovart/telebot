@@ -23,7 +23,7 @@ impl TelegramBotClient {
         chat_id: Recipient,
         topic_id: Option<String>,
         text: &str,
-    ) -> Result<MessageId, anyhow::Error> {
+    ) -> Result<Message, anyhow::Error> {
         let mut request = self
             .bot
             .send_message(chat_id, text)
@@ -36,7 +36,7 @@ impl TelegramBotClient {
 
         let message = request.await?;
 
-        Ok(message.id)
+        Ok(message)
     }
 
     pub async fn send_poll(
@@ -45,7 +45,7 @@ impl TelegramBotClient {
         topic_id: Option<String>,
         question: &str,
         options: &[String],
-    ) -> Result<MessageId, anyhow::Error> {
+    ) -> Result<Message, anyhow::Error> {
         let poll_options: Vec<InputPollOption> = options
             .iter()
             .map(|opt| InputPollOption::new(opt.clone()))
@@ -63,7 +63,7 @@ impl TelegramBotClient {
 
         let message = request.await?;
 
-        Ok(message.id)
+        Ok(message)
     }
 
     pub async fn pin_message(

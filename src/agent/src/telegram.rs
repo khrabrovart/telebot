@@ -42,6 +42,20 @@ impl TelegramBotClient {
         Ok(())
     }
 
+    pub async fn edit_message_text(
+        &self,
+        chat_id: Recipient,
+        message_id: MessageId,
+        text: &str,
+    ) -> Result<(), Error> {
+        self.bot
+            .edit_message_text(chat_id, message_id, text)
+            .parse_mode(ParseMode::Html)
+            .await?;
+
+        Ok(())
+    }
+
     pub async fn edit_message_text_with_markup(
         &self,
         chat_id: Recipient,

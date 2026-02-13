@@ -1,4 +1,4 @@
-use crate::{formatter, TelegramBotClient};
+use crate::{formatter, poll_answer_processor, TelegramBotClient};
 use anyhow::{anyhow, Error};
 use telebot_shared::{
     aws::DynamoDbClient,
@@ -38,9 +38,8 @@ pub async fn process_update(
         }
     }
 
-    if let UpdateKind::PollAnswer(_) = &update.kind {
-        // Handle poll answer if needed
-
+    if let UpdateKind::PollAnswer(poll_answer) = &update.kind {
+        poll_answer_processor::process_poll_answer(poll_answer, &bot, db).await?;
         return Ok(());
     }
 
