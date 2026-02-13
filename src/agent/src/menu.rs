@@ -28,8 +28,6 @@ pub async fn process_update(
         _ => return Ok(()),
     };
 
-    bot.answer_callback_query(query.id.clone()).await?;
-
     let parts = query
         .data
         .as_deref()
@@ -61,6 +59,8 @@ pub async fn process_update(
                 &list_rules_menu(&filtered_rules),
             )
             .await?;
+
+            bot.answer_callback_query(query.id.clone()).await?;
         }
         "rule_details" => {
             let posting_rule_id = params[0];
@@ -89,6 +89,8 @@ pub async fn process_update(
                 &rule_details_menu(&posting_rule),
             )
             .await?;
+
+            bot.answer_callback_query(query.id.clone()).await?;
         }
         "activate_rule" => {
             let posting_rule_id = params[0];
@@ -122,6 +124,8 @@ pub async fn process_update(
                 &rule_details_menu(&posting_rule),
             )
             .await?;
+
+            bot.answer_callback_query(query.id.clone()).await?;
         }
         "deactivate_rule" => {
             let posting_rule_id = params[0];
@@ -155,6 +159,8 @@ pub async fn process_update(
                 &rule_details_menu(&posting_rule),
             )
             .await?;
+
+            bot.answer_callback_query(query.id.clone()).await?;
         }
         "back" => {
             let message_id = query.message.as_ref().unwrap().id();
@@ -166,6 +172,8 @@ pub async fn process_update(
                 &main_menu(),
             )
             .await?;
+
+            bot.answer_callback_query(query.id.clone()).await?;
         }
         _ => return Ok(()),
     }

@@ -70,11 +70,7 @@ impl TelegramBotClient {
         &self,
         callback_query_id: CallbackQueryId,
     ) -> Result<(), Error> {
-        self.bot
-            .answer_callback_query(callback_query_id)
-            .text("Обработано")
-            .show_alert(false)
-            .await?;
+        self.bot.answer_callback_query(callback_query_id).await?;
 
         Ok(())
     }
