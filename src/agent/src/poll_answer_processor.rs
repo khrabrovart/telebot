@@ -77,7 +77,7 @@ pub async fn process_poll_answer(
     let actor_first_name = poll_answer.voter.user().unwrap().first_name.clone();
     let actor_last_name = poll_answer.voter.user().unwrap().last_name.clone();
     let actor_username = poll_answer.voter.user().unwrap().username.clone();
-    let action = if poll_answer.option_ids.len() > 0 {
+    let action = if !poll_answer.option_ids.is_empty() {
         poll_options[poll_answer.option_ids[0] as usize].clone()
     } else {
         "<b>Голос отозван</b>".to_string()
