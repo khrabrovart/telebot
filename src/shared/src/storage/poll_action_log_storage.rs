@@ -46,7 +46,7 @@ impl PollActionLogStorage {
             .put_item()
             .table_name(&self.table_name)
             .set_item(Some(item))
-            .condition_expression("attribute_not_exists(Id) OR version = :version")
+            .condition_expression("attribute_not_exists(Id) OR Version = :version")
             .expression_attribute_values(":version", AttributeValue::N(current_version.to_string()))
             .send()
             .await
