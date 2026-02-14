@@ -166,8 +166,8 @@ async fn post_poll_action_log_message(
     };
 
     let text = format!(
-            "<b>Лог событий для опроса по правилу</b>\n{}\n\n{}\n\n{}\n\n<i>Здесь будут отображаться действия с данным опросом</i>",
-            posting_rule.name, message_text, output_description
+            "<b>Лог событий опроса</b>\n{}.{}.\n\n{}\n\n<i>Здесь будут отображаться действия с данным опросом</i>",
+            posting_rule.name, output_description, message_text
         );
 
     let message = bot.send_text(chat_id, topic_id, &text).await?;

@@ -154,21 +154,21 @@ async fn update_poll_action_log_message(
         }
     }
 
-    let actions_text = filtered_records
+    let mut records_text = filtered_records
         .values()
-        .map(|actions| {
+        .map(|records| {
             let actor_name = format!(
                 "<b>{} {} (@{})</b>",
-                actions[0].actor_first_name,
-                actions[0].actor_last_name.clone().unwrap_or_default(),
-                actions[0].actor_username.clone().unwrap_or_default()
+                records[0].actor_first_name,
+                records[0].actor_last_name.clone().unwrap_or_default(),
+                records[0].actor_username.clone().unwrap_or_default()
             );
 
-            let actions_list = actions
+            let actions_list = records
                 .iter()
-                .map(|action| {
+                .map(|record| {
                     let tz: Tz = poll_action_log.timezone.parse().unwrap();
-                    let date = chrono::DateTime::from_timestamp(action.timestamp, 0)
+                    let date = chrono::DateTime::from_timestamp(record.timestamp, 0)
                         .unwrap()
                         .with_timezone(&tz)
                         .format("%d.%m.%Y %H:%M:%S");
@@ -176,7 +176,7 @@ async fn update_poll_action_log_message(
                     format!(
                         "{} → {}",
                         date,
-                        action
+                        record
                             .option_text
                             .clone()
                             .unwrap_or("<b>Голос отозван</b>".to_string())
@@ -190,6 +190,10 @@ async fn update_poll_action_log_message(
         .collect::<Vec<String>>()
         .join("\n\n");
 
+    if records_text.is_empty() {
+        records_text = "<i>Здесь будут отображаться действия с данным опросом</i>".to_string();
+    }
+
     let output_description = match poll_action_log_config.output {
         PollActionLogOutput::All => "Отображаются все действия".to_string(),
         PollActionLogOutput::OnlyWhenTargetOptionRevoked {
@@ -198,11 +202,18 @@ async fn update_poll_action_log_message(
     };
 
     let text = format!(
-        "<b>Лог событий для опроса по правилу</b>\n{}\n\n{}\n\n{}\n\n{}",
-        posting_rule.name, poll_action_log.text, output_description, actions_text
+        "<b>Лог событий опроса</b>\n{}.{}.\n\n{}\n\n{}",
+        posting_rule.name, output_description, poll_action_log.text, records_text
     );
 
-    bot.edit_message_text(chat_id, message_id, &text).await?;
-
-    Ok(())
+    match bot.edit_message_text(chat_id, message_id, &text).await {
+        Ok(_) => Ok(()),
+        Err(err) => {
+            if err.to_string().contains("message is not modified") {
+                Ok(())
+            } else {
+                Err(err)
+            }
+        }
+    }
 }
