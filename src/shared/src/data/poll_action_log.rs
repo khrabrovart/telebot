@@ -7,7 +7,7 @@ pub struct PollActionLog {
     pub posting_rule_id: String,
     pub action_log_message_id: i32,
     pub text: String,
-    pub actions: Vec<PollActionLogRecord>,
+    pub records: Vec<PollActionLogRecord>,
     pub timezone: String,
     pub version: u64,
 }
@@ -19,6 +19,7 @@ pub struct PollActionLogRecord {
     pub actor_first_name: String,
     pub actor_last_name: Option<String>,
     pub actor_username: Option<String>,
-    pub action: String,
-    pub timestamp: String,
+    pub option_id: Option<i32>,
+    pub option_text: Option<String>,
+    pub timestamp: i64,
 }

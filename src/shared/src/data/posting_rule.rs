@@ -23,6 +23,7 @@ pub struct PostingRule {
 pub struct PollActionLogConfig {
     pub chat_id: String,
     pub topic_id: Option<String>,
+    pub output: PollActionLogOutput,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -37,6 +38,16 @@ pub enum PostingRuleContent {
         question: String,
         #[serde(rename = "Options")]
         options: Vec<String>,
+    },
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "Type", rename_all = "PascalCase")]
+pub enum PollActionLogOutput {
+    All,
+    OnlyWhenTargetOptionRevoked {
+        #[serde(rename = "TargetOptionId")]
+        target_option_id: i32,
     },
 }
 

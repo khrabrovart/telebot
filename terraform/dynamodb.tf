@@ -27,8 +27,8 @@ resource "aws_dynamodb_table" "bots" {
   }
 }
 
-resource "aws_dynamodb_table" "polls_action_log" {
-  name         = "${local.app_name}-polls-action-log"
+resource "aws_dynamodb_table" "poll_action_log" {
+  name         = "${local.app_name}-poll-action-log"
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "Id"
 

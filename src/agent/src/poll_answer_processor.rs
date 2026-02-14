@@ -4,7 +4,11 @@ use anyhow::Error;
 use chrono_tz::Tz;
 use telebot_shared::{
     aws::DynamoDbClient,
-    data::{poll_action_log::PollActionLogRecord, PollActionLog, PostingRule, PostingRuleContent},
+    data::{
+        poll_action_log::PollActionLogRecord, posting_rule::PollActionLogOutput, PollActionLog,
+        PostingRule, PostingRuleContent,
+    },
+    storage::PollActionLogStorage,
 };
 use teloxide::types::{MessageId, PollAnswer, Recipient};
 
@@ -15,30 +19,11 @@ pub async fn process_poll_answer(
     bot: &TelegramBotClient,
     db: &DynamoDbClient,
 ) -> Result<(), Error> {
-    let polls_action_log_table_name = match std::env::var("POLLS_ACTION_LOG_TABLE") {
-        Ok(val) => val,
-        Err(_) => {
-            return Err(anyhow::anyhow!(
-                "POLLS_ACTION_LOG_TABLE environment variable is not set"
-            ));
-        }
-    };
+    let poll_action_log_storage = PollActionLogStorage::new().await?;
 
-    let poll_id: String = poll_answer.poll_id.to_string();
-
-    let poll_action_log = db
-        .get_item::<PollActionLog>(&polls_action_log_table_name, &poll_id)
+    let poll_action_log = poll_action_log_storage
+        .get(&poll_answer.poll_id.to_string())
         .await?;
-
-    let poll_action_log = match poll_action_log {
-        Some(log) => log,
-        None => {
-            return Err(anyhow::anyhow!(
-                "Poll action log not found for poll_id: {}",
-                poll_id
-            ));
-        }
-    };
 
     let posting_rules_table_name = match std::env::var("POSTING_RULES_TABLE") {
         Ok(val) => val,
@@ -77,27 +62,31 @@ pub async fn process_poll_answer(
     let actor_first_name = poll_answer.voter.user().unwrap().first_name.clone();
     let actor_last_name = poll_answer.voter.user().unwrap().last_name.clone();
     let actor_username = poll_answer.voter.user().unwrap().username.clone();
-    let action = if !poll_answer.option_ids.is_empty() {
-        poll_options[poll_answer.option_ids[0] as usize].clone()
+    let (option_id, option_text) = if !poll_answer.option_ids.is_empty() {
+        let option_id = poll_answer.option_ids[0];
+        let option_text = poll_options[option_id as usize].clone();
+        (Some(option_id as i32), Some(option_text))
     } else {
-        "<b>Голос отозван</b>".to_string()
+        (None, None)
     };
-    let timestamp = chrono::Utc::now().to_rfc3339();
+
+    let timestamp = chrono::Utc::now().timestamp();
 
     let action_record = PollActionLogRecord {
         actor_id,
         actor_first_name,
         actor_last_name,
         actor_username,
-        action,
+        option_id,
+        option_text,
         timestamp,
     };
 
     let mut updated_poll_action_log = poll_action_log.clone();
-    updated_poll_action_log.actions.push(action_record);
-    updated_poll_action_log.version += 1;
+    updated_poll_action_log.records.push(action_record);
 
-    db.put_item(&polls_action_log_table_name, &updated_poll_action_log)
+    poll_action_log_storage
+        .put(&updated_poll_action_log)
         .await?;
 
     update_poll_action_log_message(&updated_poll_action_log, &posting_rule, bot).await?;
@@ -120,16 +109,52 @@ async fn update_poll_action_log_message(
 
     let message_id: MessageId = MessageId(poll_action_log.action_log_message_id);
 
-    let mut grouped_actions: HashMap<u64, Vec<PollActionLogRecord>> = HashMap::new();
+    let mut grouped_records: HashMap<u64, Vec<PollActionLogRecord>> = HashMap::new();
 
-    for action in poll_action_log.actions.iter() {
-        grouped_actions
-            .entry(action.actor_id)
+    for record in poll_action_log.records.iter() {
+        grouped_records
+            .entry(record.actor_id)
             .or_default()
-            .push(action.clone());
+            .push(record.clone());
     }
 
-    let actions_text = grouped_actions
+    let mut filtered_records: HashMap<u64, Vec<PollActionLogRecord>> = HashMap::new();
+
+    let poll_action_log_config = posting_rule.poll_action_log.as_ref().unwrap();
+
+    match poll_action_log_config.output {
+        PollActionLogOutput::All => {
+            filtered_records = grouped_records;
+        }
+        PollActionLogOutput::OnlyWhenTargetOptionRevoked { target_option_id } => {
+            for (actor_id, records) in grouped_records.into_iter() {
+                let mut target_option_timestamp: Option<i64> = None;
+                let mut target_option_revoked: bool = false;
+
+                for record in records.into_iter() {
+                    if target_option_revoked {
+                        filtered_records
+                            .entry(actor_id)
+                            .or_default()
+                            .push(record.clone());
+
+                        continue;
+                    }
+
+                    if record.option_id == Some(target_option_id) {
+                        target_option_timestamp = Some(record.timestamp);
+                    } else if let Some(timestamp) = target_option_timestamp {
+                        if record.timestamp > timestamp {
+                            target_option_revoked = true;
+                            filtered_records.insert(actor_id, vec![record.clone()]);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    let actions_text = filtered_records
         .values()
         .map(|actions| {
             let actor_name = format!(
@@ -143,12 +168,19 @@ async fn update_poll_action_log_message(
                 .iter()
                 .map(|action| {
                     let tz: Tz = poll_action_log.timezone.parse().unwrap();
-                    let date = chrono::DateTime::parse_from_rfc3339(&action.timestamp)
+                    let date = chrono::DateTime::from_timestamp(action.timestamp, 0)
                         .unwrap()
                         .with_timezone(&tz)
                         .format("%d.%m.%Y %H:%M:%S");
 
-                    format!("{} \\> {}", date, action.action)
+                    format!(
+                        "{} → {}",
+                        date,
+                        action
+                            .option_text
+                            .clone()
+                            .unwrap_or("<b>Голос отозван</b>".to_string())
+                    )
                 })
                 .collect::<Vec<String>>()
                 .join("\n");
@@ -158,9 +190,16 @@ async fn update_poll_action_log_message(
         .collect::<Vec<String>>()
         .join("\n\n");
 
+    let output_description = match poll_action_log_config.output {
+        PollActionLogOutput::All => "Отображаются все действия".to_string(),
+        PollActionLogOutput::OnlyWhenTargetOptionRevoked {
+            target_option_id: _,
+        } => "Отображаются только действия после изменения голоса с целевой опции".to_string(),
+    };
+
     let text = format!(
-        "<b>Лог событий для опроса по правилу</b>\n{}\n\n{}\n\n{}",
-        posting_rule.name, poll_action_log.text, actions_text
+        "<b>Лог событий для опроса по правилу</b>\n{}\n\n{}\n\n{}\n\n{}",
+        posting_rule.name, poll_action_log.text, output_description, actions_text
     );
 
     bot.edit_message_text(chat_id, message_id, &text).await?;

@@ -4,11 +4,12 @@ use lambda_runtime::{Error, LambdaEvent};
 use telebot_shared::{
     aws::DynamoDbClient,
     data::{
-        posting_rule::PollActionLogConfig,
+        posting_rule::{PollActionLogConfig, PollActionLogOutput},
         BotData, PollActionLog, PostingRule,
         PostingRuleContent::{self},
         SchedulerEvent,
     },
+    storage::PollActionLogStorage,
 };
 use teloxide::types::{Message, MessageId, PollId, Recipient};
 use tracing::info;
@@ -73,7 +74,7 @@ pub async fn handle(event: LambdaEvent<SchedulerEvent>) -> Result<(), Error> {
     info!(bot_id = %bot_data.id, "Bot data found");
 
     let bot = TelegramBotClient::new(&bot_data).await?;
-    post_message(&bot, &posting_rule, &db).await?;
+    post_message(&bot, &posting_rule).await?;
 
     info!(post_id = %posting_rule.id, "Posting completed successfully");
 
@@ -91,7 +92,6 @@ fn replace_variables(text: &str) -> String {
 async fn post_message(
     bot: &TelegramBotClient,
     posting_rule: &PostingRule,
-    db: &DynamoDbClient,
 ) -> Result<(), anyhow::Error> {
     let chat_id: Recipient = posting_rule.chat_id.clone().into();
     let topic_id = posting_rule.topic_id.clone();
@@ -133,7 +133,6 @@ async fn post_message(
                         posting_rule,
                         poll_action_log_message.id,
                         &question,
-                        db,
                     )
                     .await?;
                 }
@@ -159,9 +158,16 @@ async fn post_poll_action_log_message(
     let chat_id: Recipient = action_log.chat_id.clone().into();
     let topic_id = action_log.topic_id.clone();
 
+    let output_description = match posting_rule.poll_action_log.as_ref().unwrap().output {
+        PollActionLogOutput::All => "Отображаются все действия".to_string(),
+        PollActionLogOutput::OnlyWhenTargetOptionRevoked {
+            target_option_id: _,
+        } => "Отображаются только действия после изменения голоса с целевой опции".to_string(),
+    };
+
     let text = format!(
-            "<b>Лог событий для опроса по правилу</b>\n{}\n\n{}\n\n<i>Здесь будут отображаться действия с данным опросом</i>",
-            posting_rule.name, message_text
+            "<b>Лог событий для опроса по правилу</b>\n{}\n\n{}\n\n{}\n\n<i>Здесь будут отображаться действия с данным опросом</i>",
+            posting_rule.name, message_text, output_description
         );
 
     let message = bot.send_text(chat_id, topic_id, &text).await?;
@@ -174,29 +180,20 @@ async fn create_poll_action_log(
     posting_rule: &PostingRule,
     action_log_message_id: MessageId,
     text: &str,
-    db: &DynamoDbClient,
 ) -> Result<(), anyhow::Error> {
-    let polls_action_log_table_name = match std::env::var("POLLS_ACTION_LOG_TABLE") {
-        Ok(val) => val,
-        Err(_) => {
-            return Err(anyhow::anyhow!(
-                "POLLS_ACTION_LOG_TABLE environment variable not set"
-            ));
-        }
-    };
+    let poll_action_log_storage = PollActionLogStorage::new().await?;
 
     let poll_action_log = PollActionLog {
         id: poll_id.to_string(),
         posting_rule_id: posting_rule.id.to_string(),
         action_log_message_id: action_log_message_id.0,
         text: text.to_string(),
-        actions: vec![],
+        records: vec![],
         timezone: posting_rule.timezone.clone(),
-        version: 1,
+        version: 0,
     };
 
-    db.put_item(&polls_action_log_table_name, &poll_action_log)
-        .await?;
+    poll_action_log_storage.put(&poll_action_log).await?;
 
     Ok(())
 }
