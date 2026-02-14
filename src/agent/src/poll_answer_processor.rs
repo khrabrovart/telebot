@@ -202,8 +202,8 @@ async fn update_poll_action_log_message(
     };
 
     let text = format!(
-        "<b>Лог событий опроса</b>\n{}.{}.\n\n{}\n\n{}",
-        posting_rule.name, output_description, poll_action_log.text, records_text
+        "<b>Лог событий опроса</b>\n{}\n\n{}\n\n{}",
+        output_description, poll_action_log.text, records_text
     );
 
     match bot.edit_message_text(chat_id, message_id, &text).await {
