@@ -1,5 +1,5 @@
-use lambda_runtime::{service_fn, Error};
-use posting_lambda::handle;
+use lambda_runtime::{run, service_fn, Error};
+use post_create_lambda::handler;
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
@@ -13,5 +13,5 @@ async fn main() -> Result<(), Error> {
         .without_time()
         .init();
 
-    lambda_runtime::run(service_fn(handle)).await
+    run(service_fn(handler::handle)).await
 }

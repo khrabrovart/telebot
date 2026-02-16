@@ -1,7 +1,7 @@
 use anyhow::Error;
 use aws_sdk_dynamodb::{types::AttributeValue, Client};
 
-use crate::{aws, data::PollActionLog, env};
+use crate::{aws::errors, data::PollActionLog, env};
 
 pub struct PollActionLogRepository {
     client: Client,
@@ -26,7 +26,7 @@ impl PollActionLogRepository {
             .key("Id", AttributeValue::S(id.to_string()))
             .send()
             .await
-            .map_err(aws::errors::map_aws_error)?;
+            .map_err(errors::map_aws_error)?;
 
         match result.item {
             Some(item) => Ok(serde_dynamo::from_item(item)?),
@@ -50,7 +50,7 @@ impl PollActionLogRepository {
             .expression_attribute_values(":version", AttributeValue::N(current_version.to_string()))
             .send()
             .await
-            .map_err(aws::errors::map_aws_error)?;
+            .map_err(errors::map_aws_error)?;
 
         Ok(())
     }
