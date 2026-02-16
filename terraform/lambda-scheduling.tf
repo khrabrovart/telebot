@@ -18,7 +18,7 @@ resource "aws_lambda_function" "scheduling_lambda" {
 
   environment {
     variables = {
-      TARGET_LAMBDA_ARN    = aws_lambda_function.posting_lambda.arn
+      TARGET_LAMBDA_ARN    = aws_lambda_function.post_create_lambda.arn
       SCHEDULER_ROLE_ARN   = aws_iam_role.scheduler_role.arn
       SCHEDULER_GROUP_NAME = aws_scheduler_schedule_group.scheduler_group.name
       SCHEDULE_PREFIX      = "${local.app_name}-posting-"

@@ -1,20 +1,20 @@
-data "archive_file" "posting_lambda_zip" {
+data "archive_file" "post_create_lambda_zip" {
   type        = "zip"
-  source_file = "../posting-lambda/bootstrap"
-  output_path = "posting_lambda.zip"
+  source_file = "../post-create-lambda/bootstrap"
+  output_path = "post_create_lambda.zip"
 }
 
-resource "aws_lambda_function" "posting_lambda" {
-  filename      = data.archive_file.posting_lambda_zip.output_path
-  function_name = "${local.app_name}-posting"
-  role          = aws_iam_role.posting_lambda_role.arn
+resource "aws_lambda_function" "post_create_lambda" {
+  filename      = data.archive_file.post_create_lambda_zip.output_path
+  function_name = "${local.app_name}-post-create"
+  role          = aws_iam_role.post_create_lambda_role.arn
   handler       = "bootstrap"
   runtime       = "provided.al2023"
   timeout       = 30
   memory_size   = 128
   architectures = ["arm64"]
 
-  source_code_hash = data.archive_file.posting_lambda_zip.output_base64sha256
+  source_code_hash = data.archive_file.post_create_lambda_zip.output_base64sha256
 
   environment {
     variables = {
@@ -25,13 +25,13 @@ resource "aws_lambda_function" "posting_lambda" {
   }
 
   depends_on = [
-    aws_iam_role_policy_attachment.posting_lambda_basic_execution,
-    aws_cloudwatch_log_group.posting_lambda_logs
+    aws_iam_role_policy_attachment.post_create_lambda_basic_execution,
+    aws_cloudwatch_log_group.post_create_lambda_logs
   ]
 }
 
-resource "aws_iam_role" "posting_lambda_role" {
-  name = "${local.app_name}-posting-lambda-role"
+resource "aws_iam_role" "post_create_lambda_role" {
+  name = "${local.app_name}-post-create-lambda-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -47,8 +47,8 @@ resource "aws_iam_role" "posting_lambda_role" {
   })
 }
 
-resource "aws_iam_policy" "posting_lambda_policy" {
-  name = "${local.app_name}-posting-lambda-policy"
+resource "aws_iam_policy" "post_create_lambda_policy" {
+  name = "${local.app_name}-post-create-lambda-policy"
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -73,17 +73,17 @@ resource "aws_iam_policy" "posting_lambda_policy" {
   })
 }
 
-resource "aws_iam_role_policy_attachment" "posting_lambda_basic_execution" {
+resource "aws_iam_role_policy_attachment" "post_create_lambda_basic_execution" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-  role       = aws_iam_role.posting_lambda_role.name
+  role       = aws_iam_role.post_create_lambda_role.name
 }
 
-resource "aws_iam_role_policy_attachment" "posting_lambda_policy_attachment" {
-  role       = aws_iam_role.posting_lambda_role.name
-  policy_arn = aws_iam_policy.posting_lambda_policy.arn
+resource "aws_iam_role_policy_attachment" "post_create_lambda_policy_attachment" {
+  role       = aws_iam_role.post_create_lambda_role.name
+  policy_arn = aws_iam_policy.post_create_lambda_policy.arn
 }
 
-resource "aws_cloudwatch_log_group" "posting_lambda_logs" {
-  name              = "/aws/lambda/${local.app_name}-posting"
+resource "aws_cloudwatch_log_group" "post_create_lambda_logs" {
+  name              = "/aws/lambda/${local.app_name}-post-create"
   retention_in_days = 14
 }
