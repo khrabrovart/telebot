@@ -3,12 +3,12 @@ use aws_sdk_dynamodb::{types::AttributeValue, Client};
 
 use crate::{aws, data::PollActionLog, env};
 
-pub struct PollActionLogStorage {
+pub struct PollActionLogRepository {
     client: Client,
     table_name: String,
 }
 
-impl PollActionLogStorage {
+impl PollActionLogRepository {
     pub async fn new() -> Result<Self, Error> {
         let config = aws_config::load_from_env().await;
         let client = Client::new(&config);

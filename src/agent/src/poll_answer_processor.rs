@@ -8,7 +8,7 @@ use telebot_shared::{
         poll_action_log::PollActionLogRecord, posting_rule::PollActionLogOutput, PollActionLog,
         PostingRule, PostingRuleContent,
     },
-    storage::PollActionLogStorage,
+    repositories::PollActionLogRepository,
 };
 use teloxide::types::{MessageId, PollAnswer, Recipient};
 
@@ -19,9 +19,9 @@ pub async fn process_poll_answer(
     bot: &TelegramBotClient,
     db: &DynamoDbClient,
 ) -> Result<(), Error> {
-    let poll_action_log_storage = PollActionLogStorage::new().await?;
+    let poll_action_log_repository = PollActionLogRepository::new().await?;
 
-    let poll_action_log = poll_action_log_storage
+    let poll_action_log = poll_action_log_repository
         .get(&poll_answer.poll_id.to_string())
         .await?;
 
@@ -85,7 +85,7 @@ pub async fn process_poll_answer(
     let mut updated_poll_action_log = poll_action_log.clone();
     updated_poll_action_log.records.push(action_record);
 
-    poll_action_log_storage
+    poll_action_log_repository
         .put(&updated_poll_action_log)
         .await?;
 

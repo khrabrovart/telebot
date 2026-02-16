@@ -9,7 +9,7 @@ use telebot_shared::{
         PostingRuleContent::{self},
         SchedulerEvent,
     },
-    storage::PollActionLogStorage,
+    repositories::PollActionLogRepository,
 };
 use teloxide::types::{Message, MessageId, PollId, Recipient};
 use tracing::info;
@@ -181,7 +181,7 @@ async fn create_poll_action_log(
     action_log_message_id: MessageId,
     text: &str,
 ) -> Result<(), anyhow::Error> {
-    let poll_action_log_storage = PollActionLogStorage::new().await?;
+    let poll_action_log_repository = PollActionLogRepository::new().await?;
 
     let poll_action_log = PollActionLog {
         id: poll_id.to_string(),
@@ -193,7 +193,7 @@ async fn create_poll_action_log(
         version: 0,
     };
 
-    poll_action_log_storage.put(&poll_action_log).await?;
+    poll_action_log_repository.put(&poll_action_log).await?;
 
     Ok(())
 }
