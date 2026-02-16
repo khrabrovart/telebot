@@ -9,7 +9,6 @@ dependencies = [
  "anyhow",
  "aws-config",
  "aws-sdk-dynamodb",
- "aws-sdk-ssm",
  "chrono",
  "chrono-tz",
  "lambda_http",
@@ -197,30 +196,6 @@ name = "aws-sdk-dynamodb"
 version = "1.104.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f04c47115cc8d46dcc94a9a81e7a3384cea859283c1a737729691d4221f11584"
-dependencies = [
- "aws-credential-types",
- "aws-runtime",
- "aws-smithy-async",
- "aws-smithy-http",
- "aws-smithy-json",
- "aws-smithy-observability",
- "aws-smithy-runtime",
- "aws-smithy-runtime-api",
- "aws-smithy-types",
- "aws-types",
- "bytes",
- "fastrand",
- "http 0.2.12",
- "http 1.4.0",
- "regex-lite",
- "tracing",
-]
-
-[[package]]
-name = "aws-sdk-ssm"
-version = "1.103.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6d2379a4332920b57177474804ca5169f9d451d82b0003b3a53f8b0a708056a8"
 dependencies = [
  "aws-credential-types",
  "aws-runtime",
