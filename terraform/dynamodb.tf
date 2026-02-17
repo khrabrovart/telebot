@@ -23,6 +23,11 @@ resource "aws_dynamodb_table" "poll_action_log" {
     name = "Id"
     type = "S"
   }
+
+  ttl {
+    attribute_name = "ExpiresAt"
+    enabled        = true
+  }
 }
 
 resource "aws_dynamodb_table" "posting_rules" {
@@ -54,5 +59,10 @@ resource "aws_dynamodb_table" "posts" {
   attribute {
     name = "MessageId"
     type = "N"
+  }
+
+  ttl {
+    attribute_name = "ExpiresAt"
+    enabled        = true
   }
 }

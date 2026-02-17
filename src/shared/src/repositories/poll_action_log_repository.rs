@@ -1,5 +1,6 @@
 use anyhow::Error;
 use aws_sdk_dynamodb::{types::AttributeValue, Client};
+use tracing::warn;
 
 use crate::{aws::errors, data::PollActionLog, env};
 
@@ -34,7 +35,9 @@ impl PollActionLogRepository {
         }
     }
 
-    pub async fn put(&self, item: &PollActionLog) -> Result<(), Error> {
+    // TODO: Use the result of this method to implement optimistic locking and handle conflicts in the caller
+
+    pub async fn put(&self, item: &PollActionLog) -> Result<bool, Error> {
         let current_version = item.version;
 
         let mut item = item.clone();
@@ -42,16 +45,28 @@ impl PollActionLogRepository {
 
         let item = serde_dynamo::to_item(item)?;
 
-        self.client
+        let result = self
+            .client
             .put_item()
             .table_name(&self.table_name)
             .set_item(Some(item))
             .condition_expression("attribute_not_exists(Id) OR Version = :version")
             .expression_attribute_values(":version", AttributeValue::N(current_version.to_string()))
             .send()
-            .await
-            .map_err(errors::map_aws_error)?;
+            .await;
 
-        Ok(())
+        match result {
+            Ok(_) => Ok(true),
+            Err(err) => {
+                if let Some(service_error) = err.as_service_error() {
+                    if service_error.is_conditional_check_failed_exception() {
+                        warn!("Conflict: version mismatch");
+                        return Ok(false);
+                    }
+                }
+
+                Err(errors::map_aws_error(err))
+            }
+        }
     }
 }

@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 use teloxide::types::{ChatId, MessageId};
 
+// TODO: Add a PostingRule MessageType field to determine the type of the message (poll or text) and put specific fields for each type instead of having all the fields in the PostingRule
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct PostingRule {
@@ -18,6 +20,7 @@ pub struct PostingRule {
     #[serde(default)]
     pub is_active: bool,
     pub poll_action_log: Option<PollActionLogConfig>,
+    pub expire_after_hours: Option<i64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

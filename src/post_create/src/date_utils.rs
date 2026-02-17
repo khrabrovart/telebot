@@ -11,3 +11,10 @@ pub fn get_next_weekday(target: Weekday) -> chrono::NaiveDate {
 
     now + Duration::days(days_until as i64)
 }
+
+pub fn get_expiry_timestamp(hours_from_now: i64) -> i64 {
+    let now = Local::now();
+    let expiry_time = now + Duration::hours(hours_from_now);
+
+    expiry_time.timestamp()
+}

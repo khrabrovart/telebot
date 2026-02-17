@@ -1,3 +1,4 @@
+use crate::date_utils;
 use crate::TelegramBotClient;
 use crate::REPLACEMENTS;
 use lambda_runtime::{Error, LambdaEvent};
@@ -114,12 +115,15 @@ async fn post_message(
                 topic_id: posting_rule.topic_id,
                 message_id: message.id.0,
                 bot_id: posting_rule.bot_id.clone(),
-                name: posting_rule.name.clone(),
+                posting_rule_id: posting_rule.id.clone(),
                 content: PostContent::Text { text: text.clone() },
                 schedule: posting_rule.schedule.clone(),
                 timezone: posting_rule.timezone.clone(),
                 is_pinned: posting_rule.should_pin,
                 timestamp: message.date.timestamp(),
+                expires_at: posting_rule
+                    .expire_after_hours
+                    .map(date_utils::get_expiry_timestamp),
             };
 
             post_repository.put(&post).await?;
@@ -143,7 +147,7 @@ async fn post_message(
                 topic_id: posting_rule.topic_id,
                 message_id: message.id.0,
                 bot_id: posting_rule.bot_id.clone(),
-                name: posting_rule.name.clone(),
+                posting_rule_id: posting_rule.id.clone(),
                 content: PostContent::Poll {
                     question: question.clone(),
                     options: options.clone(),
@@ -152,6 +156,9 @@ async fn post_message(
                 timezone: posting_rule.timezone.clone(),
                 is_pinned: posting_rule.should_pin,
                 timestamp: message.date.timestamp(),
+                expires_at: posting_rule
+                    .expire_after_hours
+                    .map(date_utils::get_expiry_timestamp),
             };
 
             post_repository.put(&post).await?;
@@ -174,6 +181,7 @@ async fn post_message(
                         posting_rule,
                         poll_action_log_message.id,
                         &question,
+                        message.id.0,
                     )
                     .await?;
                 }
@@ -221,18 +229,25 @@ async fn create_poll_action_log(
     posting_rule: &PostingRule,
     action_log_message_id: MessageId,
     text: &str,
+    message_id: i32,
 ) -> Result<(), anyhow::Error> {
     let poll_action_log_repository = PollActionLogRepository::new().await?;
+
+    // TODO: Move struct creating to their own functions new()
 
     let poll_action_log = PollActionLog {
         id: poll_id.to_string(),
         chat_id: posting_rule.chat_id,
         topic_id: posting_rule.topic_id,
+        message_id,
         action_log_message_id: action_log_message_id.0,
         posting_rule_id: posting_rule.id.to_string(),
         text: text.to_string(),
         records: vec![],
         timezone: posting_rule.timezone.clone(),
+        expires_at: posting_rule
+            .expire_after_hours
+            .map(date_utils::get_expiry_timestamp),
         version: 0,
     };
 
