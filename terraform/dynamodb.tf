@@ -1,16 +1,3 @@
-resource "aws_dynamodb_table" "posting_rules" {
-  name             = "${local.app_name}-posting-rules"
-  billing_mode     = "PAY_PER_REQUEST"
-  hash_key         = "Id"
-  stream_enabled   = true
-  stream_view_type = "NEW_AND_OLD_IMAGES"
-
-  attribute {
-    name = "Id"
-    type = "S"
-  }
-}
-
 resource "aws_dynamodb_table" "bots" {
   name             = "${local.app_name}-bots"
   billing_mode     = "PAY_PER_REQUEST"
@@ -27,8 +14,19 @@ resource "aws_dynamodb_table" "bots" {
   }
 }
 
-resource "aws_dynamodb_table" "posts" {
-  name             = "${local.app_name}-posts"
+resource "aws_dynamodb_table" "poll_action_log" {
+  name         = "${local.app_name}-poll-action-log"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "Id"
+
+  attribute {
+    name = "Id"
+    type = "S"
+  }
+}
+
+resource "aws_dynamodb_table" "posting_rules" {
+  name             = "${local.app_name}-posting-rules"
   billing_mode     = "PAY_PER_REQUEST"
   hash_key         = "Id"
   stream_enabled   = true
@@ -40,10 +38,12 @@ resource "aws_dynamodb_table" "posts" {
   }
 }
 
-resource "aws_dynamodb_table" "poll_action_log" {
-  name         = "${local.app_name}-poll-action-log"
-  billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "Id"
+resource "aws_dynamodb_table" "posts" {
+  name             = "${local.app_name}-posts"
+  billing_mode     = "PAY_PER_REQUEST"
+  hash_key         = "Id"
+  stream_enabled   = true
+  stream_view_type = "NEW_AND_OLD_IMAGES"
 
   attribute {
     name = "Id"

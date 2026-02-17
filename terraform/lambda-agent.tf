@@ -18,9 +18,10 @@ resource "aws_lambda_function" "agent_lambda" {
 
   environment {
     variables = {
-      POSTING_RULES_TABLE   = aws_dynamodb_table.posting_rules.name
       BOTS_TABLE            = aws_dynamodb_table.bots.name
       POLL_ACTION_LOG_TABLE = aws_dynamodb_table.poll_action_log.name
+      POSTING_RULES_TABLE   = aws_dynamodb_table.posting_rules.name
+      POSTS_TABLE           = aws_dynamodb_table.posts.name
     }
   }
 
@@ -65,9 +66,10 @@ resource "aws_iam_policy" "agent_lambda_policy" {
           "dynamodb:Query"
         ]
         Resource = [
-          aws_dynamodb_table.posting_rules.arn,
           aws_dynamodb_table.bots.arn,
-          aws_dynamodb_table.poll_action_log.arn
+          aws_dynamodb_table.poll_action_log.arn,
+          aws_dynamodb_table.posting_rules.arn,
+          aws_dynamodb_table.posts.arn
         ]
       },
     ]
