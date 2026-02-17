@@ -39,7 +39,7 @@ resource "aws_dynamodb_table" "posting_rules" {
 }
 
 resource "aws_dynamodb_table" "posts" {
-  name             = "${local.app_name}-posts-1"
+  name             = "${local.app_name}-posts"
   billing_mode     = "PAY_PER_REQUEST"
   hash_key         = "ChatId"
   range_key        = "MessageId"
