@@ -30,7 +30,7 @@ impl TelegramBotClient {
             .parse_mode(ParseMode::Html);
 
         if let Some(topic_id) = topic_id {
-            let thread_id = ThreadId(topic_id.clone());
+            let thread_id = ThreadId(topic_id);
             request = request.message_thread_id(thread_id);
         }
 
@@ -57,7 +57,7 @@ impl TelegramBotClient {
             .is_anonymous(false);
 
         if let Some(topic_id) = topic_id {
-            let thread_id = ThreadId(topic_id.clone());
+            let thread_id = ThreadId(topic_id);
             request = request.message_thread_id(thread_id);
         }
 

@@ -95,8 +95,8 @@ async fn post_message(
     posting_rule: &PostingRule,
     post_repository: PostRepository,
 ) -> Result<(), anyhow::Error> {
-    let chat_id: Recipient = posting_rule.chat_id.clone().into();
-    let topic_id = posting_rule.topic_id.clone();
+    let chat_id: Recipient = posting_rule.chat_id.into();
+    let topic_id = posting_rule.topic_id;
 
     match &posting_rule.content {
         PostingRuleContent::Text { text } => {
@@ -108,9 +108,9 @@ async fn post_message(
             }
 
             let post = Post {
-                chat_id: posting_rule.chat_id.clone(),
-                topic_id: posting_rule.topic_id.clone(),
-                message_id: message.id.clone(),
+                chat_id: posting_rule.chat_id,
+                topic_id: posting_rule.topic_id,
+                message_id: message.id,
                 bot_id: posting_rule.bot_id.clone(),
                 name: posting_rule.name.clone(),
                 content: PostContent::Text { text: text.clone() },
@@ -135,9 +135,9 @@ async fn post_message(
             }
 
             let post = Post {
-                chat_id: posting_rule.chat_id.clone(),
-                topic_id: posting_rule.topic_id.clone(),
-                message_id: message.id.clone(),
+                chat_id: posting_rule.chat_id,
+                topic_id: posting_rule.topic_id,
+                message_id: message.id,
                 bot_id: posting_rule.bot_id.clone(),
                 name: posting_rule.name.clone(),
                 content: PostContent::Poll {
@@ -190,8 +190,8 @@ async fn post_poll_action_log_message(
     bot: &TelegramBotClient,
     posting_rule: &PostingRule,
 ) -> Result<Message, anyhow::Error> {
-    let chat_id: Recipient = action_log.chat_id.clone().into();
-    let topic_id = action_log.topic_id.clone();
+    let chat_id: Recipient = action_log.chat_id.into();
+    let topic_id = action_log.topic_id;
 
     let output_description = match posting_rule.poll_action_log.as_ref().unwrap().output {
         PollActionLogOutput::All => "Отображаются все действия".to_string(),
