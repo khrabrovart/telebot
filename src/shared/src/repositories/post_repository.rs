@@ -18,13 +18,13 @@ impl PostRepository {
         })
     }
 
-    pub async fn get(&self, chat_id: &str, message_id: &str) -> Result<Post, Error> {
+    pub async fn get(&self, chat_id: i64, message_id: i32) -> Result<Post, Error> {
         let result = self
             .client
             .get_item()
             .table_name(&self.table_name)
-            .key("ChatId", AttributeValue::S(chat_id.to_string()))
-            .key("MessageId", AttributeValue::S(message_id.to_string()))
+            .key("ChatId", AttributeValue::N(chat_id.to_string()))
+            .key("MessageId", AttributeValue::N(message_id.to_string()))
             .send()
             .await
             .map_err(errors::map_aws_error)?;

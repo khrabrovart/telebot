@@ -9,6 +9,7 @@ pub struct PostingRule {
     pub chat_id: i64,
     pub topic_id: Option<i32>,
     pub name: String,
+    pub description: Option<String>,
     pub content: PostingRuleContent,
     pub schedule: String,
     pub timezone: String,

@@ -107,6 +107,8 @@ async fn post_message(
                 bot.pin_message(chat_id.clone(), message.id).await?;
             }
 
+            info!("Message sent successfully, saving post to repository");
+
             let post = Post {
                 chat_id: posting_rule.chat_id,
                 topic_id: posting_rule.topic_id,
@@ -134,6 +136,8 @@ async fn post_message(
                 bot.pin_message(chat_id.clone(), message.id).await?;
             }
 
+            info!("Poll sent successfully, saving post to repository");
+
             let post = Post {
                 chat_id: posting_rule.chat_id,
                 topic_id: posting_rule.topic_id,
@@ -151,6 +155,8 @@ async fn post_message(
             };
 
             post_repository.put(&post).await?;
+
+            info!("Post saved successfully, checking if poll action log is enabled");
 
             match &posting_rule.poll_action_log {
                 Some(action_log) => {
