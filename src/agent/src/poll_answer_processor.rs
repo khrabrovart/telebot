@@ -102,7 +102,7 @@ async fn update_poll_action_log_message(
         .poll_action_log
         .as_ref()
         .unwrap()
-        .chat_id
+        .chat_id()
         .into();
 
     let message_id: MessageId = MessageId(poll_action_log.action_log_message_id);

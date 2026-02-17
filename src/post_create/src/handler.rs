@@ -95,8 +95,8 @@ async fn post_message(
     posting_rule: &PostingRule,
     post_repository: PostRepository,
 ) -> Result<(), anyhow::Error> {
-    let chat_id: Recipient = posting_rule.chat_id.into();
-    let topic_id = posting_rule.topic_id;
+    let chat_id: Recipient = posting_rule.chat_id().into();
+    let topic_id = posting_rule.topic_id();
 
     match &posting_rule.content {
         PostingRuleContent::Text { text } => {
@@ -108,8 +108,8 @@ async fn post_message(
             }
 
             let post = Post {
-                chat_id: posting_rule.chat_id,
-                topic_id: posting_rule.topic_id,
+                chat_id: posting_rule.chat_id(),
+                topic_id: posting_rule.topic_id(),
                 message_id: message.id,
                 bot_id: posting_rule.bot_id.clone(),
                 name: posting_rule.name.clone(),
@@ -135,8 +135,8 @@ async fn post_message(
             }
 
             let post = Post {
-                chat_id: posting_rule.chat_id,
-                topic_id: posting_rule.topic_id,
+                chat_id: posting_rule.chat_id(),
+                topic_id: posting_rule.topic_id(),
                 message_id: message.id,
                 bot_id: posting_rule.bot_id.clone(),
                 name: posting_rule.name.clone(),
@@ -156,7 +156,7 @@ async fn post_message(
                 Some(action_log) => {
                     info!(
                         "Poll action log enabled for posting rule {}, messages will be sent to chat {}",
-                        posting_rule.id, action_log.chat_id
+                        posting_rule.id, action_log.chat_id()
                     );
 
                     let poll_action_log_message =
@@ -190,8 +190,8 @@ async fn post_poll_action_log_message(
     bot: &TelegramBotClient,
     posting_rule: &PostingRule,
 ) -> Result<Message, anyhow::Error> {
-    let chat_id: Recipient = action_log.chat_id.into();
-    let topic_id = action_log.topic_id;
+    let chat_id: Recipient = action_log.chat_id().into();
+    let topic_id = action_log.topic_id();
 
     let output_description = match posting_rule.poll_action_log.as_ref().unwrap().output {
         PollActionLogOutput::All => "Отображаются все действия".to_string(),

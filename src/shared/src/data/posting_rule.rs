@@ -6,8 +6,8 @@ use teloxide::types::{ChatId, MessageId};
 pub struct PostingRule {
     pub id: String,
     pub bot_id: String,
-    pub chat_id: ChatId,
-    pub topic_id: Option<MessageId>,
+    chat_id: i64,
+    topic_id: Option<i32>,
     pub name: String,
     pub content: PostingRuleContent,
     pub schedule: String,
@@ -22,9 +22,19 @@ pub struct PostingRule {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct PollActionLogConfig {
-    pub chat_id: ChatId,
-    pub topic_id: Option<MessageId>,
+    chat_id: i64,
+    topic_id: Option<i32>,
     pub output: PollActionLogOutput,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "Type", rename_all = "PascalCase")]
+pub enum PollActionLogOutput {
+    All,
+    OnlyWhenTargetOptionRevoked {
+        #[serde(rename = "TargetOptionId")]
+        target_option_id: i32,
+    },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -42,16 +52,6 @@ pub enum PostingRuleContent {
     },
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "Type", rename_all = "PascalCase")]
-pub enum PollActionLogOutput {
-    All,
-    OnlyWhenTargetOptionRevoked {
-        #[serde(rename = "TargetOptionId")]
-        target_option_id: i32,
-    },
-}
-
 impl PostingRule {
     pub fn is_valid(&self) -> bool {
         !self.bot_id.is_empty()
@@ -64,5 +64,23 @@ impl PostingRule {
                     !question.is_empty() && !options.is_empty()
                 }
             }
+    }
+
+    pub fn chat_id(&self) -> ChatId {
+        ChatId(self.chat_id)
+    }
+
+    pub fn topic_id(&self) -> Option<MessageId> {
+        self.topic_id.map(MessageId)
+    }
+}
+
+impl PollActionLogConfig {
+    pub fn chat_id(&self) -> ChatId {
+        ChatId(self.chat_id)
+    }
+
+    pub fn topic_id(&self) -> Option<MessageId> {
+        self.topic_id.map(MessageId)
     }
 }

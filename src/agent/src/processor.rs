@@ -109,7 +109,7 @@ pub async fn process_update(
                 }
             };
 
-            let posting_rules_chat_id: Recipient = posting_rule.chat_id.into();
+            let posting_rules_chat_id: Recipient = posting_rule.chat_id().into();
             let chat_name = bot.get_chat_title(posting_rules_chat_id).await?;
 
             let formatted_rule = formatter::format_rule(&posting_rule, &chat_name);
@@ -144,7 +144,7 @@ pub async fn process_update(
             db.put_item(&posting_rules_table_name, &posting_rule)
                 .await?;
 
-            let posting_rules_chat_id: Recipient = posting_rule.chat_id.into();
+            let posting_rules_chat_id: Recipient = posting_rule.chat_id().into();
             let chat_name = bot.get_chat_title(posting_rules_chat_id).await?;
 
             let formatted_rule = formatter::format_rule(&posting_rule, &chat_name);
@@ -179,7 +179,7 @@ pub async fn process_update(
             db.put_item(&posting_rules_table_name, &posting_rule)
                 .await?;
 
-            let posting_rules_chat_id: Recipient = posting_rule.chat_id.into();
+            let posting_rules_chat_id: Recipient = posting_rule.chat_id().into();
             let chat_name = bot.get_chat_title(posting_rules_chat_id).await?;
 
             let formatted_rule = formatter::format_rule(&posting_rule, &chat_name);
