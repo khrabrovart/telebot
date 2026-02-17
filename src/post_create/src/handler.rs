@@ -1,15 +1,13 @@
-use crate::telegram::TelegramBotClient;
+use crate::TelegramBotClient;
 use crate::REPLACEMENTS;
 use lambda_runtime::{Error, LambdaEvent};
 use telebot_shared::{
     aws::DynamoDbClient,
     data::{
-        posting_rule::{PollActionLogConfig, PollActionLogOutput},
-        BotData, PollActionLog, PostingRule,
-        PostingRuleContent::{self},
-        SchedulerEvent,
+        BotData, PollActionLog, PollActionLogConfig, PollActionLogOutput, Post, PostContent,
+        PostingRule, PostingRuleContent, SchedulerEvent,
     },
-    repositories::PollActionLogRepository,
+    repositories::{PollActionLogRepository, PostRepository},
 };
 use teloxide::types::{Message, MessageId, PollId, Recipient};
 use tracing::info;
@@ -74,7 +72,10 @@ pub async fn handle(event: LambdaEvent<SchedulerEvent>) -> Result<(), Error> {
     info!(bot_id = %bot_data.id, "Bot data found");
 
     let bot = TelegramBotClient::new(&bot_data).await?;
-    post_message(&bot, &posting_rule).await?;
+
+    let post_repository = PostRepository::new(db.client.clone()).await?;
+
+    post_message(&bot, &posting_rule, post_repository).await?;
 
     info!(post_id = %posting_rule.id, "Posting completed successfully");
 
@@ -92,6 +93,7 @@ fn replace_variables(text: &str) -> String {
 async fn post_message(
     bot: &TelegramBotClient,
     posting_rule: &PostingRule,
+    post_repository: PostRepository,
 ) -> Result<(), anyhow::Error> {
     let chat_id: Recipient = posting_rule.chat_id.clone().into();
     let topic_id = posting_rule.topic_id.clone();
@@ -105,6 +107,21 @@ async fn post_message(
                 bot.pin_message(chat_id.clone(), message.id).await?;
             }
 
+            let post = Post {
+                id: message.id.0.to_string(),
+                bot_id: posting_rule.bot_id.clone(),
+                chat_id: posting_rule.chat_id.clone(),
+                topic_id: posting_rule.topic_id.clone(),
+                name: posting_rule.name.clone(),
+                content: PostContent::Text { text: text.clone() },
+                schedule: posting_rule.schedule.clone(),
+                timezone: posting_rule.timezone.clone(),
+                is_pinned: posting_rule.should_pin,
+                timestamp: message.date.timestamp(),
+            };
+
+            post_repository.put(&post).await?;
+
             Ok(())
         }
         PostingRuleContent::Poll { question, options } => {
@@ -116,6 +133,24 @@ async fn post_message(
             if posting_rule.should_pin {
                 bot.pin_message(chat_id.clone(), message.id).await?;
             }
+
+            let post = Post {
+                id: message.id.0.to_string(),
+                bot_id: posting_rule.bot_id.clone(),
+                chat_id: posting_rule.chat_id.clone(),
+                topic_id: posting_rule.topic_id.clone(),
+                name: posting_rule.name.clone(),
+                content: PostContent::Poll {
+                    question: question.clone(),
+                    options: options.clone(),
+                },
+                schedule: posting_rule.schedule.clone(),
+                timezone: posting_rule.timezone.clone(),
+                is_pinned: posting_rule.should_pin,
+                timestamp: message.date.timestamp(),
+            };
+
+            post_repository.put(&post).await?;
 
             match &posting_rule.poll_action_log {
                 Some(action_log) => {

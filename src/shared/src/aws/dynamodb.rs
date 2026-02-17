@@ -5,7 +5,7 @@ use serde::de::DeserializeOwned;
 use crate::aws::errors::map_aws_error;
 
 pub struct DynamoDbClient {
-    client: Client,
+    pub client: Client,
 }
 
 impl DynamoDbClient {

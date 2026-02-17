@@ -5,8 +5,7 @@ use chrono_tz::Tz;
 use telebot_shared::{
     aws::DynamoDbClient,
     data::{
-        poll_action_log::PollActionLogRecord, posting_rule::PollActionLogOutput, PollActionLog,
-        PostingRule, PostingRuleContent,
+        PollActionLog, PollActionLogOutput, PollActionLogRecord, PostingRule, PostingRuleContent,
     },
     repositories::PollActionLogRepository,
 };
