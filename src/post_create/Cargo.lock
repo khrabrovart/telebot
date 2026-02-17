@@ -2343,6 +2343,7 @@ dependencies = [
  "aws-smithy-types",
  "serde",
  "serde_dynamo",
+ "teloxide",
  "tracing",
 ]
 

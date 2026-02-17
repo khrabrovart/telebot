@@ -110,7 +110,7 @@ async fn post_message(
             let post = Post {
                 chat_id: posting_rule.chat_id.clone(),
                 topic_id: posting_rule.topic_id.clone(),
-                message_id: message.id.0.to_string(),
+                message_id: message.id.clone(),
                 bot_id: posting_rule.bot_id.clone(),
                 name: posting_rule.name.clone(),
                 content: PostContent::Text { text: text.clone() },
@@ -137,7 +137,7 @@ async fn post_message(
             let post = Post {
                 chat_id: posting_rule.chat_id.clone(),
                 topic_id: posting_rule.topic_id.clone(),
-                message_id: message.id.0.to_string(),
+                message_id: message.id.clone(),
                 bot_id: posting_rule.bot_id.clone(),
                 name: posting_rule.name.clone(),
                 content: PostContent::Poll {

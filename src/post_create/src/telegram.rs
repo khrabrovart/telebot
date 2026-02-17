@@ -21,7 +21,7 @@ impl TelegramBotClient {
     pub async fn send_text(
         &self,
         chat_id: Recipient,
-        topic_id: Option<String>,
+        topic_id: Option<MessageId>,
         text: &str,
     ) -> Result<Message, anyhow::Error> {
         let mut request = self
@@ -30,7 +30,7 @@ impl TelegramBotClient {
             .parse_mode(ParseMode::Html);
 
         if let Some(topic_id) = topic_id {
-            let thread_id = ThreadId(MessageId(topic_id.parse::<i32>()?));
+            let thread_id = ThreadId(topic_id.clone());
             request = request.message_thread_id(thread_id);
         }
 
@@ -42,7 +42,7 @@ impl TelegramBotClient {
     pub async fn send_poll(
         &self,
         chat_id: Recipient,
-        topic_id: Option<String>,
+        topic_id: Option<MessageId>,
         question: &str,
         options: &[String],
     ) -> Result<Message, anyhow::Error> {
@@ -57,7 +57,7 @@ impl TelegramBotClient {
             .is_anonymous(false);
 
         if let Some(topic_id) = topic_id {
-            let thread_id = ThreadId(MessageId(topic_id.parse::<i32>()?));
+            let thread_id = ThreadId(topic_id.clone());
             request = request.message_thread_id(thread_id);
         }
 

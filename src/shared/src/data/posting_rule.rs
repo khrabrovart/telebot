@@ -1,12 +1,13 @@
 use serde::{Deserialize, Serialize};
+use teloxide::types::{ChatId, MessageId};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct PostingRule {
     pub id: String,
     pub bot_id: String,
-    pub chat_id: String,
-    pub topic_id: Option<String>,
+    pub chat_id: ChatId,
+    pub topic_id: Option<MessageId>,
     pub name: String,
     pub content: PostingRuleContent,
     pub schedule: String,
@@ -21,8 +22,8 @@ pub struct PostingRule {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct PollActionLogConfig {
-    pub chat_id: String,
-    pub topic_id: Option<String>,
+    pub chat_id: ChatId,
+    pub topic_id: Option<MessageId>,
     pub output: PollActionLogOutput,
 }
 
@@ -54,23 +55,14 @@ pub enum PollActionLogOutput {
 impl PostingRule {
     pub fn is_valid(&self) -> bool {
         !self.bot_id.is_empty()
-            && !self.chat_id.is_empty()
             && !self.name.is_empty()
             && !self.schedule.is_empty()
             && !self.timezone.is_empty()
-            && match &self.topic_id {
-                Some(topic_id) => !topic_id.is_empty(),
-                None => true,
-            }
             && match &self.content {
                 PostingRuleContent::Text { text } => !text.is_empty(),
                 PostingRuleContent::Poll { question, options } => {
                     !question.is_empty() && !options.is_empty()
                 }
-            }
-            && match &self.poll_action_log {
-                Some(poll_action_log) => !poll_action_log.chat_id.is_empty(),
-                None => true,
             }
     }
 }

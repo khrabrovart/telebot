@@ -48,11 +48,11 @@ resource "aws_dynamodb_table" "posts" {
 
   attribute {
     name = "ChatId"
-    type = "S"
+    type = "N"
   }
 
   attribute {
     name = "MessageId"
-    type = "S"
+    type = "N"
   }
 }
