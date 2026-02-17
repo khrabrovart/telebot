@@ -1,12 +1,11 @@
 use serde::{Deserialize, Serialize};
-use teloxide::types::{ChatId, MessageId};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct Post {
-    pub chat_id: ChatId,
-    pub topic_id: Option<MessageId>,
-    pub message_id: MessageId,
+    pub chat_id: i64,
+    pub topic_id: Option<i32>,
+    pub message_id: i32,
     pub bot_id: String,
     pub name: String,
     pub content: PostContent,

@@ -108,9 +108,9 @@ async fn post_message(
             }
 
             let post = Post {
-                chat_id: posting_rule.chat_id(),
-                topic_id: posting_rule.topic_id(),
-                message_id: message.id,
+                chat_id: posting_rule.chat_id,
+                topic_id: posting_rule.topic_id,
+                message_id: message.id.0,
                 bot_id: posting_rule.bot_id.clone(),
                 name: posting_rule.name.clone(),
                 content: PostContent::Text { text: text.clone() },
@@ -135,9 +135,9 @@ async fn post_message(
             }
 
             let post = Post {
-                chat_id: posting_rule.chat_id(),
-                topic_id: posting_rule.topic_id(),
-                message_id: message.id,
+                chat_id: posting_rule.chat_id,
+                topic_id: posting_rule.topic_id,
+                message_id: message.id.0,
                 bot_id: posting_rule.bot_id.clone(),
                 name: posting_rule.name.clone(),
                 content: PostContent::Poll {
@@ -220,8 +220,10 @@ async fn create_poll_action_log(
 
     let poll_action_log = PollActionLog {
         id: poll_id.to_string(),
-        posting_rule_id: posting_rule.id.to_string(),
+        chat_id: posting_rule.chat_id,
+        topic_id: posting_rule.topic_id,
         action_log_message_id: action_log_message_id.0,
+        posting_rule_id: posting_rule.id.to_string(),
         text: text.to_string(),
         records: vec![],
         timezone: posting_rule.timezone.clone(),

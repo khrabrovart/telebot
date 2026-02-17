@@ -4,8 +4,10 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "PascalCase")]
 pub struct PollActionLog {
     pub id: String,
-    pub posting_rule_id: String,
+    pub chat_id: i64,
+    pub topic_id: Option<i32>,
     pub action_log_message_id: i32,
+    pub posting_rule_id: String,
     pub text: String,
     pub records: Vec<PollActionLogRecord>,
     pub timezone: String,

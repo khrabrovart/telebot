@@ -1,6 +1,6 @@
 use anyhow::{anyhow, Error};
 use aws_sdk_scheduler::{
-    types::{FlexibleTimeWindow, FlexibleTimeWindowMode, ScheduleState, Target},
+    types::{FlexibleTimeWindow, FlexibleTimeWindowMode, RetryPolicy, ScheduleState, Target},
     Client,
 };
 use telebot_shared::{
@@ -57,9 +57,15 @@ impl SchedulerClient {
         let payload_json = serde_json::to_string(&payload)
             .map_err(|_| anyhow!("Failed to serialize scheduler payload"))?;
 
+        let retry_policy = RetryPolicy::builder()
+            .maximum_event_age_in_seconds(60)
+            .maximum_retry_attempts(0)
+            .build();
+
         let target = Target::builder()
             .arn(&self.target_lambda_arn)
             .role_arn(&self.scheduler_role_arn)
+            .retry_policy(retry_policy)
             .input(payload_json)
             .build()
             .map_err(|e| anyhow!("Failed to build target: {e}"))?;

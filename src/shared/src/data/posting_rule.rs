@@ -6,8 +6,8 @@ use teloxide::types::{ChatId, MessageId};
 pub struct PostingRule {
     pub id: String,
     pub bot_id: String,
-    chat_id: i64,
-    topic_id: Option<i32>,
+    pub chat_id: i64,
+    pub topic_id: Option<i32>,
     pub name: String,
     pub content: PostingRuleContent,
     pub schedule: String,
@@ -22,8 +22,8 @@ pub struct PostingRule {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct PollActionLogConfig {
-    chat_id: i64,
-    topic_id: Option<i32>,
+    pub chat_id: i64,
+    pub topic_id: Option<i32>,
     pub output: PollActionLogOutput,
 }
 
