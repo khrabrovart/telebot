@@ -3,10 +3,10 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct Post {
-    pub id: String,
-    pub bot_id: String,
     pub chat_id: String,
     pub topic_id: Option<String>,
+    pub message_id: String,
+    pub bot_id: String,
     pub name: String,
     pub content: PostContent,
     pub schedule: String,

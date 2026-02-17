@@ -18,19 +18,24 @@ impl PostRepository {
         })
     }
 
-    pub async fn get(&self, id: &str) -> Result<Post, Error> {
+    pub async fn get(&self, chat_id: &str, message_id: &str) -> Result<Post, Error> {
         let result = self
             .client
             .get_item()
             .table_name(&self.table_name)
-            .key("Id", AttributeValue::S(id.to_string()))
+            .key("ChatId", AttributeValue::S(chat_id.to_string()))
+            .key("MessageId", AttributeValue::S(message_id.to_string()))
             .send()
             .await
             .map_err(errors::map_aws_error)?;
 
         match result.item {
             Some(item) => Ok(serde_dynamo::from_item(item)?),
-            None => Err(anyhow::anyhow!("Post not found for id: {}", id)),
+            None => Err(anyhow::anyhow!(
+                "Post not found for ChatId: {}, MessageId: {}",
+                chat_id,
+                message_id
+            )),
         }
     }
 
