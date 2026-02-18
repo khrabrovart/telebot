@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 pub struct PollActionLog {
     pub id: String,
     pub chat_id: i64,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub topic_id: Option<i32>,
     pub message_id: i32,
     pub action_log_message_id: i32,
@@ -14,6 +15,7 @@ pub struct PollActionLog {
     pub text: String,
     pub records: Vec<PollActionLogRecord>,
     pub timezone: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub expires_at: Option<i64>,
     pub version: u64,
 }
@@ -23,9 +25,13 @@ pub struct PollActionLog {
 pub struct PollActionLogRecord {
     pub actor_id: u64,
     pub actor_first_name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub actor_last_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub actor_username: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub option_id: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub option_text: Option<String>,
     pub timestamp: i64,
 }

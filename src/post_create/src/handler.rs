@@ -1,13 +1,15 @@
-use crate::date_utils;
 use crate::TelegramBotClient;
 use crate::REPLACEMENTS;
 use lambda_runtime::{Error, LambdaEvent};
 use telebot_shared::data::posting_rule::PollPostingRule;
+use telebot_shared::data::PollPost;
+use telebot_shared::data::TextPost;
+use telebot_shared::date;
 use telebot_shared::{
     aws::DynamoDbClient,
     data::{
-        BotData, PollActionLog, PollActionLogConfig, PollActionLogOutput, Post, PostContent,
-        PostingRule, SchedulerEvent,
+        BotData, PollActionLog, PollActionLogConfig, PollActionLogOutput, Post, PostingRule,
+        SchedulerEvent,
     },
     repositories::{PollActionLogRepository, PostRepository},
 };
@@ -104,24 +106,14 @@ async fn post_message(
 
             info!("Message sent successfully, saving post to repository");
 
-            let post = Post {
-                chat_id: text_posting_rule.base.chat_id,
-                topic_id: text_posting_rule.base.topic_id,
-                message_id: message.id.0,
-                bot_id: text_posting_rule.base.bot_id.clone(),
-                posting_rule_id: text_posting_rule.base.id.clone(),
-                content: PostContent::Text { text: text.clone() },
-                schedule: text_posting_rule.base.schedule.clone(),
-                timezone: text_posting_rule.base.timezone.clone(),
-                is_pinned: text_posting_rule.base.should_pin,
-                timestamp: message.date.timestamp(),
-                expires_at: text_posting_rule
-                    .base
-                    .expire_after_hours
-                    .map(date_utils::get_expiry_timestamp),
-            };
+            let text_post = TextPost::new(
+                text_posting_rule,
+                message.id.0,
+                message.date.timestamp(),
+                &text,
+            );
 
-            post_repository.put(&post).await?;
+            post_repository.put(&Post::Text(text_post)).await?;
 
             Ok(())
         }
@@ -142,27 +134,15 @@ async fn post_message(
 
             info!("Poll sent successfully, saving post to repository");
 
-            let post = Post {
-                chat_id: poll_posting_rule.base.chat_id,
-                topic_id: poll_posting_rule.base.topic_id,
-                message_id: message.id.0,
-                bot_id: poll_posting_rule.base.bot_id.clone(),
-                posting_rule_id: poll_posting_rule.base.id.clone(),
-                content: PostContent::Poll {
-                    question: question.clone(),
-                    options: poll_posting_rule.content.options.clone(),
-                },
-                schedule: poll_posting_rule.base.schedule.clone(),
-                timezone: poll_posting_rule.base.timezone.clone(),
-                is_pinned: poll_posting_rule.base.should_pin,
-                timestamp: message.date.timestamp(),
-                expires_at: poll_posting_rule
-                    .base
-                    .expire_after_hours
-                    .map(date_utils::get_expiry_timestamp),
-            };
+            let poll_post = PollPost::new(
+                poll_posting_rule,
+                message.id.0,
+                message.date.timestamp(),
+                &question,
+                &poll_posting_rule.content.options,
+            );
 
-            post_repository.put(&post).await?;
+            post_repository.put(&Post::Poll(poll_post)).await?;
 
             info!("Post saved successfully, checking if poll action log is enabled");
 
@@ -249,7 +229,7 @@ async fn create_poll_action_log(
         expires_at: poll_posting_rule
             .base
             .expire_after_hours
-            .map(date_utils::get_expiry_timestamp),
+            .map(date::calculate_expires_at),
         version: 0,
     };
 

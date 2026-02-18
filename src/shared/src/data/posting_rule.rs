@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 use teloxide::types::{ChatId, MessageId};
 
-// TODO: Add a PostingRule MessageType field to determine the type of the message (poll or text) and put specific fields for each type instead of having all the fields in the PostingRule
 // TODO: Add proper repository structures for data types and create DynamoDB only once at the Cold Start
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -103,6 +102,7 @@ impl PostingRule {
         }
     }
 
+    // TODO: If possible, remove these functions from PostingRule and implement them individually in TextPostingRule and PollPostingRule
     pub fn base(&self) -> &BasePostingRule {
         match self {
             PostingRule::Text(rule) => &rule.base,

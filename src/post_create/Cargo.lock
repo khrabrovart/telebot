@@ -2341,6 +2341,7 @@ dependencies = [
  "aws-config",
  "aws-sdk-dynamodb",
  "aws-smithy-types",
+ "chrono",
  "serde",
  "serde_dynamo",
  "teloxide",

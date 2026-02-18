@@ -6,9 +6,9 @@ pub mod scheduler_event;
 
 pub use bot::BotData;
 pub use poll_action_log::{PollActionLog, PollActionLogRecord};
-pub use post::{Post, PostContent};
+pub use post::{PollPost, PollPostContent, Post, TextPost, TextPostContent};
 pub use posting_rule::{
-    BasePostingRule, PollActionLogConfig, PollActionLogOutput, PollPostingRuleContent, PostingRule,
+    PollActionLogConfig, PollActionLogOutput, PollPostingRuleContent, PostingRule,
     TextPostingRuleContent,
 };
 pub use scheduler_event::SchedulerEvent;
