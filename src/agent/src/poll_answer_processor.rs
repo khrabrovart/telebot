@@ -5,7 +5,8 @@ use chrono_tz::Tz;
 use telebot_shared::{
     aws::DynamoDbClient,
     data::{
-        PollActionLog, PollActionLogOutput, PollActionLogRecord, PostingRule, PostingRuleContent,
+        posting_rule::PollPostingRule, PollActionLog, PollActionLogOutput, PollActionLogRecord,
+        PostingRule,
     },
     repositories::PollActionLogRepository,
 };
@@ -47,15 +48,17 @@ pub async fn process_poll_answer(
         }
     };
 
-    let poll_options = match &posting_rule.content {
-        PostingRuleContent::Poll { options, .. } => options,
+    let poll_posting_rule = match posting_rule {
+        PostingRule::Poll(rule) => rule,
         _ => {
             return Err(anyhow::anyhow!(
-                "Posting rule content is not a poll for id: {}",
-                &posting_rule.id
+                "Associated posting rule is not a poll for id: {}",
+                poll_action_log.posting_rule_id
             ));
         }
     };
+
+    let poll_options = &poll_posting_rule.content.options;
 
     let actor_id = poll_answer.voter.user().unwrap().id.0;
     let actor_first_name = poll_answer.voter.user().unwrap().first_name.clone();
@@ -88,17 +91,17 @@ pub async fn process_poll_answer(
         .put(&updated_poll_action_log)
         .await?;
 
-    update_poll_action_log_message(&updated_poll_action_log, &posting_rule, bot).await?;
+    update_poll_action_log_message(&updated_poll_action_log, &poll_posting_rule, bot).await?;
 
     Ok(())
 }
 
 async fn update_poll_action_log_message(
     poll_action_log: &PollActionLog,
-    posting_rule: &PostingRule,
+    poll_posting_rule: &PollPostingRule,
     bot: &TelegramBotClient,
 ) -> Result<(), Error> {
-    let chat_id: Recipient = posting_rule
+    let chat_id: Recipient = poll_posting_rule
         .poll_action_log
         .as_ref()
         .unwrap()
@@ -118,7 +121,7 @@ async fn update_poll_action_log_message(
 
     let mut filtered_records: HashMap<u64, Vec<PollActionLogRecord>> = HashMap::new();
 
-    let poll_action_log_config = posting_rule.poll_action_log.as_ref().unwrap();
+    let poll_action_log_config = poll_posting_rule.poll_action_log.as_ref().unwrap();
 
     match poll_action_log_config.output {
         PollActionLogOutput::All => {

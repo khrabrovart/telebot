@@ -50,9 +50,9 @@ impl SchedulerClient {
         &self,
         posting_rule: &PostingRule,
     ) -> Result<(), anyhow::Error> {
-        let schedule_name = self.schedule_name(&posting_rule.id);
+        let schedule_name = self.schedule_name(&posting_rule.id());
         let payload = SchedulerEvent {
-            posting_rule_id: posting_rule.id.clone(),
+            posting_rule_id: posting_rule.id().to_string(),
         };
         let payload_json = serde_json::to_string(&payload)
             .map_err(|_| anyhow!("Failed to serialize scheduler payload"))?;
@@ -75,9 +75,9 @@ impl SchedulerClient {
             .build()
             .map_err(|_| anyhow!("Failed to build flexible time window"))?;
 
-        let schedule_expression = format!("cron({})", posting_rule.schedule.trim());
+        let schedule_expression = format!("cron({})", posting_rule.schedule().trim());
 
-        let state = if posting_rule.is_active {
+        let state = if posting_rule.is_active() {
             ScheduleState::Enabled
         } else {
             ScheduleState::Disabled
@@ -92,7 +92,7 @@ impl SchedulerClient {
                 .name(&schedule_name)
                 .state(state)
                 .schedule_expression(&schedule_expression)
-                .schedule_expression_timezone(&posting_rule.timezone)
+                .schedule_expression_timezone(&posting_rule.timezone().to_string())
                 .target(target)
                 .flexible_time_window(flexible_time_window)
                 .send()
@@ -105,7 +105,7 @@ impl SchedulerClient {
                 .name(&schedule_name)
                 .state(state)
                 .schedule_expression(&schedule_expression)
-                .schedule_expression_timezone(&posting_rule.timezone)
+                .schedule_expression_timezone(&posting_rule.timezone().to_string())
                 .target(target)
                 .flexible_time_window(flexible_time_window)
                 .send()

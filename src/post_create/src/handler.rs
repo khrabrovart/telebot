@@ -2,11 +2,12 @@ use crate::date_utils;
 use crate::TelegramBotClient;
 use crate::REPLACEMENTS;
 use lambda_runtime::{Error, LambdaEvent};
+use telebot_shared::data::posting_rule::PollPostingRule;
 use telebot_shared::{
     aws::DynamoDbClient,
     data::{
         BotData, PollActionLog, PollActionLogConfig, PollActionLogOutput, Post, PostContent,
-        PostingRule, PostingRuleContent, SchedulerEvent,
+        PostingRule, SchedulerEvent,
     },
     repositories::{PollActionLogRepository, PostRepository},
 };
@@ -37,19 +38,12 @@ pub async fn handle(event: LambdaEvent<SchedulerEvent>) -> Result<(), Error> {
         }
     };
 
-    info!(
-        post_id = %posting_rule.id,
-        content = ?posting_rule.content,
-        is_active = posting_rule.is_active,
-        "Posting rule found"
-    );
-
     if !posting_rule.is_valid() {
-        return Err(format!("Posting rule is misconfigured: {}", posting_rule.id).into());
+        return Err(format!("Posting rule is misconfigured: {}", posting_rule.base().id).into());
     }
 
-    if !posting_rule.is_active {
-        return Err(format!("Posting rule is not active: {}", posting_rule.id).into());
+    if !posting_rule.base().is_active {
+        return Err(format!("Posting rule is not active: {}", posting_rule.base().id).into());
     }
 
     let bots_table_name = match std::env::var("BOTS_TABLE") {
@@ -60,13 +54,13 @@ pub async fn handle(event: LambdaEvent<SchedulerEvent>) -> Result<(), Error> {
     };
 
     let bot_data = db
-        .get_item::<BotData>(&bots_table_name, &posting_rule.bot_id)
+        .get_item::<BotData>(&bots_table_name, &posting_rule.base().bot_id)
         .await?;
 
     let bot_data = match bot_data {
         Some(data) => data,
         None => {
-            return Err(format!("Bot data not found: {}", posting_rule.bot_id).into());
+            return Err(format!("Bot data not found: {}", posting_rule.base().bot_id).into());
         }
     };
 
@@ -78,7 +72,7 @@ pub async fn handle(event: LambdaEvent<SchedulerEvent>) -> Result<(), Error> {
 
     post_message(&bot, &posting_rule, post_repository).await?;
 
-    info!(post_id = %posting_rule.id, "Posting completed successfully");
+    info!(post_id = %posting_rule.base().id, "Posting completed successfully");
 
     Ok(())
 }
@@ -99,29 +93,30 @@ async fn post_message(
     let chat_id: Recipient = posting_rule.chat_id().into();
     let topic_id = posting_rule.topic_id();
 
-    match &posting_rule.content {
-        PostingRuleContent::Text { text } => {
-            let text = replace_variables(text);
+    match posting_rule {
+        PostingRule::Text(text_posting_rule) => {
+            let text = replace_variables(&text_posting_rule.content.text);
             let message = bot.send_text(chat_id.clone(), topic_id, &text).await?;
 
-            if posting_rule.should_pin {
+            if text_posting_rule.base.should_pin {
                 bot.pin_message(chat_id.clone(), message.id).await?;
             }
 
             info!("Message sent successfully, saving post to repository");
 
             let post = Post {
-                chat_id: posting_rule.chat_id,
-                topic_id: posting_rule.topic_id,
+                chat_id: text_posting_rule.base.chat_id,
+                topic_id: text_posting_rule.base.topic_id,
                 message_id: message.id.0,
-                bot_id: posting_rule.bot_id.clone(),
-                posting_rule_id: posting_rule.id.clone(),
+                bot_id: text_posting_rule.base.bot_id.clone(),
+                posting_rule_id: text_posting_rule.base.id.clone(),
                 content: PostContent::Text { text: text.clone() },
-                schedule: posting_rule.schedule.clone(),
-                timezone: posting_rule.timezone.clone(),
-                is_pinned: posting_rule.should_pin,
+                schedule: text_posting_rule.base.schedule.clone(),
+                timezone: text_posting_rule.base.timezone.clone(),
+                is_pinned: text_posting_rule.base.should_pin,
                 timestamp: message.date.timestamp(),
-                expires_at: posting_rule
+                expires_at: text_posting_rule
+                    .base
                     .expire_after_hours
                     .map(date_utils::get_expiry_timestamp),
             };
@@ -130,33 +125,39 @@ async fn post_message(
 
             Ok(())
         }
-        PostingRuleContent::Poll { question, options } => {
-            let question = replace_variables(question);
+        PostingRule::Poll(poll_posting_rule) => {
+            let question = replace_variables(&poll_posting_rule.content.question);
             let message = bot
-                .send_poll(chat_id.clone(), topic_id, &question, options)
+                .send_poll(
+                    chat_id.clone(),
+                    topic_id,
+                    &question,
+                    &poll_posting_rule.content.options,
+                )
                 .await?;
 
-            if posting_rule.should_pin {
+            if poll_posting_rule.base.should_pin {
                 bot.pin_message(chat_id.clone(), message.id).await?;
             }
 
             info!("Poll sent successfully, saving post to repository");
 
             let post = Post {
-                chat_id: posting_rule.chat_id,
-                topic_id: posting_rule.topic_id,
+                chat_id: poll_posting_rule.base.chat_id,
+                topic_id: poll_posting_rule.base.topic_id,
                 message_id: message.id.0,
-                bot_id: posting_rule.bot_id.clone(),
-                posting_rule_id: posting_rule.id.clone(),
+                bot_id: poll_posting_rule.base.bot_id.clone(),
+                posting_rule_id: poll_posting_rule.base.id.clone(),
                 content: PostContent::Poll {
                     question: question.clone(),
-                    options: options.clone(),
+                    options: poll_posting_rule.content.options.clone(),
                 },
-                schedule: posting_rule.schedule.clone(),
-                timezone: posting_rule.timezone.clone(),
-                is_pinned: posting_rule.should_pin,
+                schedule: poll_posting_rule.base.schedule.clone(),
+                timezone: poll_posting_rule.base.timezone.clone(),
+                is_pinned: poll_posting_rule.base.should_pin,
                 timestamp: message.date.timestamp(),
-                expires_at: posting_rule
+                expires_at: poll_posting_rule
+                    .base
                     .expire_after_hours
                     .map(date_utils::get_expiry_timestamp),
             };
@@ -165,20 +166,20 @@ async fn post_message(
 
             info!("Post saved successfully, checking if poll action log is enabled");
 
-            match &posting_rule.poll_action_log {
+            match &poll_posting_rule.poll_action_log {
                 Some(action_log) => {
                     info!(
                         "Poll action log enabled for posting rule {}, messages will be sent to chat {}",
-                        posting_rule.id, action_log.chat_id()
+                        poll_posting_rule.base.id, action_log.chat_id()
                     );
 
                     let poll_action_log_message =
-                        post_poll_action_log_message(&question, action_log, bot, posting_rule)
+                        post_poll_action_log_message(&question, action_log, bot, poll_posting_rule)
                             .await?;
 
                     create_poll_action_log(
                         message.poll().unwrap().id.clone(),
-                        posting_rule,
+                        poll_posting_rule,
                         poll_action_log_message.id,
                         &question,
                         message.id.0,
@@ -188,7 +189,7 @@ async fn post_message(
                 None => {
                     info!(
                         "Poll action log not enabled for posting rule {}, no messages will be sent",
-                        posting_rule.id
+                        poll_posting_rule.base.id
                     );
                 }
             }
@@ -202,12 +203,12 @@ async fn post_poll_action_log_message(
     message_text: &str,
     action_log: &PollActionLogConfig,
     bot: &TelegramBotClient,
-    posting_rule: &PostingRule,
+    poll_posting_rule: &PollPostingRule,
 ) -> Result<Message, anyhow::Error> {
     let chat_id: Recipient = action_log.chat_id().into();
     let topic_id = action_log.topic_id();
 
-    let output_description = match posting_rule.poll_action_log.as_ref().unwrap().output {
+    let output_description = match poll_posting_rule.poll_action_log.as_ref().unwrap().output {
         PollActionLogOutput::All => "Отображаются все действия".to_string(),
         PollActionLogOutput::OnlyWhenTargetOptionRevoked {
             target_option_id: _,
@@ -226,7 +227,7 @@ async fn post_poll_action_log_message(
 
 async fn create_poll_action_log(
     poll_id: PollId,
-    posting_rule: &PostingRule,
+    poll_posting_rule: &PollPostingRule,
     action_log_message_id: MessageId,
     text: &str,
     message_id: i32,
@@ -237,15 +238,16 @@ async fn create_poll_action_log(
 
     let poll_action_log = PollActionLog {
         id: poll_id.to_string(),
-        chat_id: posting_rule.chat_id,
-        topic_id: posting_rule.topic_id,
+        chat_id: poll_posting_rule.base.chat_id,
+        topic_id: poll_posting_rule.base.topic_id,
         message_id,
         action_log_message_id: action_log_message_id.0,
-        posting_rule_id: posting_rule.id.to_string(),
+        posting_rule_id: poll_posting_rule.base.id.to_string(),
         text: text.to_string(),
         records: vec![],
-        timezone: posting_rule.timezone.clone(),
-        expires_at: posting_rule
+        timezone: poll_posting_rule.base.timezone.clone(),
+        expires_at: poll_posting_rule
+            .base
             .expire_after_hours
             .map(date_utils::get_expiry_timestamp),
         version: 0,

@@ -1,7 +1,7 @@
-use telebot_shared::data::{PostingRule, PostingRuleContent};
+use telebot_shared::data::PostingRule;
 
 pub fn format_rule(posting_rule: &PostingRule, chat_name: &str) -> String {
-    let name = &posting_rule.name;
+    let name = &posting_rule.name();
 
     let chat_name = if let Some(topic_id) = &posting_rule.topic_id() {
         format!("{} (топик {})", chat_name, topic_id)
@@ -9,28 +9,30 @@ pub fn format_rule(posting_rule: &PostingRule, chat_name: &str) -> String {
         chat_name.to_string()
     };
 
-    let status = if posting_rule.is_active {
+    let status = if posting_rule.is_active() {
         "🟢 ВКЛЮЧЕНО"
     } else {
         "🔴 ВЫКЛЮЧЕНО"
     };
 
-    let text = match &posting_rule.content {
-        PostingRuleContent::Text { text } => text,
-        PostingRuleContent::Poll { question, options } => {
-            let options = options
+    let text = match posting_rule {
+        PostingRule::Text(text_posting_rule) => &text_posting_rule.content.text,
+        PostingRule::Poll(poll_posting_rule) => {
+            let options = poll_posting_rule
+                .content
+                .options
                 .iter()
                 .map(|opt| format!("🔘 {}", opt))
                 .collect::<Vec<_>>()
                 .join("\n");
 
-            &format!("{}\n\n{}", question, options)
+            &format!("{}\n\n{}", poll_posting_rule.content.question, options)
         }
     };
 
-    let schedule = format_schedule(&posting_rule.schedule, &posting_rule.timezone);
+    let schedule = format_schedule(posting_rule.schedule(), posting_rule.timezone());
 
-    let will_pin = if posting_rule.should_pin {
+    let will_pin = if posting_rule.should_pin() {
         "✅"
     } else {
         "❌"

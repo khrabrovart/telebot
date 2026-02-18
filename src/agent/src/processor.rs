@@ -80,7 +80,7 @@ pub async fn process_update(
             let posting_rules = db.get_all::<PostingRule>(&posting_rules_table_name).await?;
             let filtered_rules: Vec<PostingRule> = posting_rules
                 .iter()
-                .filter(|posting_rule| posting_rule.bot_id == bot.bot_id)
+                .filter(|posting_rule| posting_rule.bot_id() == bot.bot_id)
                 .cloned()
                 .collect();
 
@@ -139,7 +139,7 @@ pub async fn process_update(
                 }
             };
 
-            posting_rule.is_active = true;
+            posting_rule.set_active(true);
 
             db.put_item(&posting_rules_table_name, &posting_rule)
                 .await?;
@@ -174,7 +174,7 @@ pub async fn process_update(
                 }
             };
 
-            posting_rule.is_active = false;
+            posting_rule.set_active(false);
 
             db.put_item(&posting_rules_table_name, &posting_rule)
                 .await?;
@@ -251,8 +251,8 @@ fn list_rules_menu(posting_rules: &[PostingRule]) -> InlineKeyboardMarkup {
         .iter()
         .map(|posting_rule| {
             vec![InlineKeyboardButton::callback(
-                posting_rule.name.clone(),
-                format!("rule_details:{}", posting_rule.id),
+                posting_rule.name(),
+                format!("rule_details:{}", posting_rule.id()),
             )]
         })
         .collect();
@@ -263,15 +263,15 @@ fn list_rules_menu(posting_rules: &[PostingRule]) -> InlineKeyboardMarkup {
 }
 
 fn rule_details_menu(posting_rule: &PostingRule) -> InlineKeyboardMarkup {
-    let action = if posting_rule.is_active {
+    let action = if posting_rule.is_active() {
         vec![InlineKeyboardButton::callback(
             "🔴 Выключить",
-            format!("deactivate_rule:{}", posting_rule.id),
+            format!("deactivate_rule:{}", posting_rule.id()),
         )]
     } else {
         vec![InlineKeyboardButton::callback(
             "🟢 Включить",
-            format!("activate_rule:{}", posting_rule.id),
+            format!("activate_rule:{}", posting_rule.id()),
         )]
     };
 
