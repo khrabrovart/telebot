@@ -42,7 +42,7 @@ async fn process_update(
     scheduler: &SchedulerClient,
 ) -> Result<(), Error> {
     if !posting_rule.is_valid() {
-        scheduler.delete_schedule(&posting_rule.id()).await?;
+        scheduler.delete_schedule(posting_rule.id()).await?;
         return Ok(());
     }
 
@@ -55,6 +55,6 @@ async fn process_remove(
     posting_rule: &PostingRule,
     scheduler: &SchedulerClient,
 ) -> Result<(), Error> {
-    scheduler.delete_schedule(&posting_rule.id()).await?;
+    scheduler.delete_schedule(posting_rule.id()).await?;
     Ok(())
 }

@@ -50,7 +50,7 @@ impl SchedulerClient {
         &self,
         posting_rule: &PostingRule,
     ) -> Result<(), anyhow::Error> {
-        let schedule_name = self.schedule_name(&posting_rule.id());
+        let schedule_name = self.schedule_name(posting_rule.id());
         let payload = SchedulerEvent {
             posting_rule_id: posting_rule.id().to_string(),
         };
@@ -92,7 +92,7 @@ impl SchedulerClient {
                 .name(&schedule_name)
                 .state(state)
                 .schedule_expression(&schedule_expression)
-                .schedule_expression_timezone(&posting_rule.timezone().to_string())
+                .schedule_expression_timezone(posting_rule.timezone().to_string())
                 .target(target)
                 .flexible_time_window(flexible_time_window)
                 .send()
@@ -105,7 +105,7 @@ impl SchedulerClient {
                 .name(&schedule_name)
                 .state(state)
                 .schedule_expression(&schedule_expression)
-                .schedule_expression_timezone(&posting_rule.timezone().to_string())
+                .schedule_expression_timezone(posting_rule.timezone().to_string())
                 .target(target)
                 .flexible_time_window(flexible_time_window)
                 .send()
