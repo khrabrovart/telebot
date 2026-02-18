@@ -1,18 +1,13 @@
-use std::collections::HashMap;
-
+use crate::TelegramBotClient;
 use anyhow::Error;
 use chrono_tz::Tz;
+use std::collections::HashMap;
 use telebot_shared::{
     aws::DynamoDbClient,
-    data::{
-        posting_rule::PollPostingRule, PollActionLog, PollActionLogOutput, PollActionLogRecord,
-        PostingRule,
-    },
+    data::{PollActionLog, PollActionLogOutput, PollActionLogRecord, PollPostingRule, PostingRule},
     repositories::PollActionLogRepository,
 };
 use teloxide::types::{MessageId, PollAnswer, Recipient};
-
-use crate::TelegramBotClient;
 
 pub async fn process_poll_answer(
     poll_answer: &PollAnswer,

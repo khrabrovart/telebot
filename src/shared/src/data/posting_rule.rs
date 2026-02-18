@@ -102,6 +102,7 @@ impl PostingRule {
         }
     }
 
+    // TODO: Split this file like Post into separate small files
     // TODO: If possible, remove these functions from PostingRule and implement them individually in TextPostingRule and PollPostingRule
     pub fn base(&self) -> &BasePostingRule {
         match self {

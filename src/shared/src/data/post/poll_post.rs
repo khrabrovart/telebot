@@ -1,0 +1,36 @@
+use serde::{Deserialize, Serialize};
+
+use crate::data::{post::BasePost, posting_rule::PollPostingRule};
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct PollPost {
+    #[serde(flatten)]
+    pub base: BasePost,
+    pub content: PollPostContent,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct PollPostContent {
+    pub question: String,
+    pub options: Vec<String>,
+}
+
+impl PollPost {
+    pub fn new(
+        poll_posting_rule: &PollPostingRule,
+        message_id: i32,
+        timestamp: i64,
+        question: &str,
+        options: &Vec<String>,
+    ) -> Self {
+        let base = BasePost::new(&poll_posting_rule.base, message_id, timestamp);
+        let content = PollPostContent {
+            question: question.to_string(),
+            options: options.clone(),
+        };
+
+        PollPost { base, content }
+    }
+}
