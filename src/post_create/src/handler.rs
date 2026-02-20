@@ -1,13 +1,11 @@
 use crate::TelegramBotClient;
 use crate::REPLACEMENTS;
 use lambda_runtime::{Error, LambdaEvent};
-use telebot_shared::data::PollActionLogOutput;
-use telebot_shared::data::PollPostingRule;
 use telebot_shared::{
     aws::DynamoDbClient,
     data::{
-        BotData, PollActionLog, PollActionLogConfig, PollPost, Post, PostingRule, SchedulerEvent,
-        TextPost,
+        BotData, PollActionLog, PollPost, PollPostingRule, PollPostingRuleActionLog,
+        PollPostingRuleActionLogOutput, Post, PostingRule, SchedulerEvent, TextPost,
     },
     date,
     repositories::{PollActionLogRepository, PostRepository},
@@ -180,7 +178,7 @@ async fn post_message(
 
 async fn post_poll_action_log_message(
     message_text: &str,
-    action_log: &PollActionLogConfig,
+    action_log: &PollPostingRuleActionLog,
     bot: &TelegramBotClient,
     poll_posting_rule: &PollPostingRule,
 ) -> Result<Message, anyhow::Error> {
@@ -188,8 +186,8 @@ async fn post_poll_action_log_message(
     let topic_id = action_log.topic_id();
 
     let output_description = match poll_posting_rule.poll_action_log.as_ref().unwrap().output {
-        PollActionLogOutput::All => "Отображаются все действия".to_string(),
-        PollActionLogOutput::OnlyWhenTargetOptionRevoked {
+        PollPostingRuleActionLogOutput::All => "Отображаются все действия".to_string(),
+        PollPostingRuleActionLogOutput::OnlyWhenTargetOptionRevoked {
             target_option_id: _,
         } => "Отображаются только действия после изменения голоса с целевой опции".to_string(),
     };

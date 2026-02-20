@@ -1,3 +1,4 @@
+use crate::data::{posting_rule::BasePostingRule, PollPostingRule, TextPostingRule};
 use serde::{Deserialize, Serialize};
 use teloxide::types::{ChatId, MessageId};
 
@@ -8,77 +9,6 @@ use teloxide::types::{ChatId, MessageId};
 pub enum PostingRule {
     Text(TextPostingRule),
     Poll(PollPostingRule),
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "PascalCase")]
-pub struct BasePostingRule {
-    pub id: String,
-    pub bot_id: String,
-    pub chat_id: i64,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub topic_id: Option<i32>,
-    pub name: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub description: Option<String>,
-    pub schedule: String,
-    pub timezone: String,
-    #[serde(default)]
-    pub should_pin: bool,
-    #[serde(default)]
-    pub is_active: bool,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub expire_after_hours: Option<i64>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "PascalCase")]
-pub struct TextPostingRule {
-    #[serde(flatten)]
-    pub base: BasePostingRule,
-    pub content: TextPostingRuleContent,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "PascalCase")]
-pub struct PollPostingRule {
-    #[serde(flatten)]
-    pub base: BasePostingRule,
-    pub content: PollPostingRuleContent,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub poll_action_log: Option<PollActionLogConfig>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "PascalCase")]
-pub struct TextPostingRuleContent {
-    pub text: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "PascalCase")]
-pub struct PollPostingRuleContent {
-    pub question: String,
-    pub options: Vec<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "PascalCase")]
-pub struct PollActionLogConfig {
-    pub chat_id: i64,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub topic_id: Option<i32>,
-    pub output: PollActionLogOutput,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "Type", rename_all = "PascalCase")]
-pub enum PollActionLogOutput {
-    All,
-    OnlyWhenTargetOptionRevoked {
-        #[serde(rename = "TargetOptionId")]
-        target_option_id: i32,
-    },
 }
 
 impl PostingRule {
@@ -102,8 +32,8 @@ impl PostingRule {
         }
     }
 
-    // TODO: Split this file like Post into separate small files
     // TODO: If possible, remove these functions from PostingRule and implement them individually in TextPostingRule and PollPostingRule
+
     pub fn base(&self) -> &BasePostingRule {
         match self {
             PostingRule::Text(rule) => &rule.base,
@@ -193,15 +123,5 @@ impl PostingRule {
             PostingRule::Text(rule) => rule.base.expire_after_hours,
             PostingRule::Poll(rule) => rule.base.expire_after_hours,
         }
-    }
-}
-
-impl PollActionLogConfig {
-    pub fn chat_id(&self) -> ChatId {
-        ChatId(self.chat_id)
-    }
-
-    pub fn topic_id(&self) -> Option<MessageId> {
-        self.topic_id.map(MessageId)
     }
 }

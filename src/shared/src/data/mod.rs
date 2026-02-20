@@ -8,6 +8,7 @@ pub use bot::BotData;
 pub use poll_action_log::{PollActionLog, PollActionLogRecord};
 pub use post::{PollPost, Post, TextPost};
 pub use posting_rule::{
-    PollActionLogConfig, PollActionLogOutput, PollPostingRule, PostingRule, TextPostingRule,
+    PollPostingRule, PollPostingRuleActionLog, PollPostingRuleActionLogOutput, PostingRule,
+    TextPostingRule,
 };
 pub use scheduler_event::SchedulerEvent;

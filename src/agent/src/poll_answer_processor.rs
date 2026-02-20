@@ -4,7 +4,10 @@ use chrono_tz::Tz;
 use std::collections::HashMap;
 use telebot_shared::{
     aws::DynamoDbClient,
-    data::{PollActionLog, PollActionLogOutput, PollActionLogRecord, PollPostingRule, PostingRule},
+    data::{
+        PollActionLog, PollActionLogRecord, PollPostingRule, PollPostingRuleActionLogOutput,
+        PostingRule,
+    },
     repositories::PollActionLogRepository,
 };
 use teloxide::types::{MessageId, PollAnswer, Recipient};
@@ -119,10 +122,10 @@ async fn update_poll_action_log_message(
     let poll_action_log_config = poll_posting_rule.poll_action_log.as_ref().unwrap();
 
     match poll_action_log_config.output {
-        PollActionLogOutput::All => {
+        PollPostingRuleActionLogOutput::All => {
             filtered_records = grouped_records;
         }
-        PollActionLogOutput::OnlyWhenTargetOptionRevoked { target_option_id } => {
+        PollPostingRuleActionLogOutput::OnlyWhenTargetOptionRevoked { target_option_id } => {
             for (actor_id, records) in grouped_records.into_iter() {
                 let mut target_option_timestamp: Option<i64> = None;
                 let mut target_option_revoked: bool = false;
@@ -149,6 +152,8 @@ async fn update_poll_action_log_message(
             }
         }
     }
+
+    // TODO: Implement cosistent sorting for log records by date
 
     let mut records_text = filtered_records
         .values()
@@ -191,8 +196,8 @@ async fn update_poll_action_log_message(
     }
 
     let output_description = match poll_action_log_config.output {
-        PollActionLogOutput::All => "Отображаются все действия".to_string(),
-        PollActionLogOutput::OnlyWhenTargetOptionRevoked {
+        PollPostingRuleActionLogOutput::All => "Отображаются все действия".to_string(),
+        PollPostingRuleActionLogOutput::OnlyWhenTargetOptionRevoked {
             target_option_id: _,
         } => "Отображаются только действия после изменения голоса с целевой опции".to_string(),
     };
