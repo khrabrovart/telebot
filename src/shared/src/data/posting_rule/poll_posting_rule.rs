@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use teloxide::types::{ChatId, MessageId};
 
-use crate::data::posting_rule::BasePostingRule;
+use crate::data::{posting_rule::BasePostingRule, PostingRuleTrait};
 
 // TODO: Rename poll_action_log to action_log
 
@@ -48,5 +48,15 @@ impl PollPostingRuleActionLog {
 
     pub fn topic_id(&self) -> Option<MessageId> {
         self.topic_id.map(MessageId)
+    }
+}
+
+impl PostingRuleTrait for PollPostingRule {
+    fn base(&self) -> &BasePostingRule {
+        &self.base
+    }
+
+    fn set_active(&mut self, active: bool) {
+        self.base.is_active = active;
     }
 }

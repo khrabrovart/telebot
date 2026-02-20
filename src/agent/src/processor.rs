@@ -2,7 +2,7 @@ use crate::{formatter, poll_answer_processor, TelegramBotClient};
 use anyhow::{anyhow, Error};
 use telebot_shared::{
     aws::DynamoDbClient,
-    data::{BotData, PostingRule},
+    data::{BotData, PostingRule, PostingRuleTrait},
 };
 use teloxide::{
     dispatching::dialogue::GetChatId,

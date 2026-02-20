@@ -5,7 +5,8 @@ use telebot_shared::{
     aws::DynamoDbClient,
     data::{
         BotData, PollActionLog, PollPost, PollPostingRule, PollPostingRuleActionLog,
-        PollPostingRuleActionLogOutput, Post, PostingRule, SchedulerEvent, TextPost,
+        PollPostingRuleActionLogOutput, Post, PostingRule, PostingRuleTrait, SchedulerEvent,
+        TextPost,
     },
     date,
     repositories::{PollActionLogRepository, PostRepository},

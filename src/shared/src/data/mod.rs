@@ -9,6 +9,6 @@ pub use poll_action_log::{PollActionLog, PollActionLogRecord};
 pub use post::{PollPost, Post, TextPost};
 pub use posting_rule::{
     PollPostingRule, PollPostingRuleActionLog, PollPostingRuleActionLogOutput, PostingRule,
-    TextPostingRule,
+    PostingRuleTrait, TextPostingRule,
 };
 pub use scheduler_event::SchedulerEvent;

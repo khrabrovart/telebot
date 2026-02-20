@@ -5,7 +5,7 @@ use aws_sdk_scheduler::{
 };
 use telebot_shared::{
     aws::errors::map_aws_error,
-    data::{PostingRule, SchedulerEvent},
+    data::{PostingRule, PostingRuleTrait, SchedulerEvent},
 };
 
 pub struct SchedulerClient {

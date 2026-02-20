@@ -2,7 +2,7 @@ use crate::{SchedulerClient, StreamAction};
 use aws_lambda_events::event::dynamodb::Event;
 use lambda_runtime::{Error, LambdaEvent};
 use serde_dynamo;
-use telebot_shared::data::PostingRule;
+use telebot_shared::data::{PostingRule, PostingRuleTrait};
 use tracing::info;
 
 pub async fn handle(event: LambdaEvent<Event>) -> Result<(), Error> {

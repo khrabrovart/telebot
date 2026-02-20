@@ -1,4 +1,4 @@
-use telebot_shared::data::PostingRule;
+use telebot_shared::data::{PostingRule, PostingRuleTrait};
 
 pub fn format_rule(posting_rule: &PostingRule, chat_name: &str) -> String {
     let name = &posting_rule.name();
