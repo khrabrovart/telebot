@@ -1,4 +1,7 @@
-use crate::data::{post::BasePost, posting_rule::PollPostingRule};
+use crate::data::{
+    post::{BasePost, PostTrait},
+    posting_rule::PollPostingRule,
+};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -31,5 +34,11 @@ impl PollPost {
         };
 
         PollPost { base, content }
+    }
+}
+
+impl PostTrait for PollPost {
+    fn base(&self) -> &BasePost {
+        &self.base
     }
 }

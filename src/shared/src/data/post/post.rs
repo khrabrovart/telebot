@@ -1,6 +1,8 @@
+use crate::data::{
+    post::{poll_post::PollPost, text_post::TextPost},
+    PostTrait,
+};
 use serde::{Deserialize, Serialize};
-
-use crate::data::post::{poll_post::PollPost, text_post::TextPost};
 
 // TODO: Implement TTL correctly for Post and PollActionLog
 // TODO: Remove expired posts from chats or allow different behavior like closing polls instead of deleting the messages
@@ -10,4 +12,13 @@ use crate::data::post::{poll_post::PollPost, text_post::TextPost};
 pub enum Post {
     Text(TextPost),
     Poll(PollPost),
+}
+
+impl PostTrait for Post {
+    fn base(&self) -> &crate::data::post::base_post::BasePost {
+        match self {
+            Post::Text(text_post) => text_post.base(),
+            Post::Poll(poll_post) => poll_post.base(),
+        }
+    }
 }

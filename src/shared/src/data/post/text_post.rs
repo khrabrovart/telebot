@@ -1,4 +1,7 @@
-use crate::data::{post::base_post::BasePost, posting_rule::TextPostingRule};
+use crate::data::{
+    post::{BasePost, PostTrait},
+    posting_rule::TextPostingRule,
+};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -28,5 +31,11 @@ impl TextPost {
         };
 
         TextPost { base, content }
+    }
+}
+
+impl PostTrait for TextPost {
+    fn base(&self) -> &BasePost {
+        &self.base
     }
 }
