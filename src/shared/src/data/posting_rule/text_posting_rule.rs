@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "PascalCase")]
 pub struct TextPostingRule {
     #[serde(flatten)]
-    pub base: BasePostingRule,
+    base: BasePostingRule,
     pub content: TextPostingRuleContent,
 }
 

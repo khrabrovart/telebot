@@ -16,17 +16,17 @@ impl PostingRule {
     pub fn is_valid(&self) -> bool {
         match self {
             PostingRule::Text(rule) => {
-                !rule.base.bot_id.is_empty()
-                    && !rule.base.name.is_empty()
-                    && !rule.base.schedule.is_empty()
-                    && !rule.base.timezone.is_empty()
+                !rule.bot_id().is_empty()
+                    && !rule.name().is_empty()
+                    && !rule.schedule().is_empty()
+                    && !rule.timezone().is_empty()
                     && !rule.content.text.is_empty()
             }
             PostingRule::Poll(rule) => {
-                !rule.base.bot_id.is_empty()
-                    && !rule.base.name.is_empty()
-                    && !rule.base.schedule.is_empty()
-                    && !rule.base.timezone.is_empty()
+                !rule.bot_id().is_empty()
+                    && !rule.name().is_empty()
+                    && !rule.schedule().is_empty()
+                    && !rule.timezone().is_empty()
                     && !rule.content.question.is_empty()
                     && !rule.content.options.is_empty()
             }
@@ -37,15 +37,15 @@ impl PostingRule {
 impl PostingRuleTrait for PostingRule {
     fn base(&self) -> &BasePostingRule {
         match self {
-            PostingRule::Text(rule) => &rule.base,
-            PostingRule::Poll(rule) => &rule.base,
+            PostingRule::Text(rule) => &rule.base(),
+            PostingRule::Poll(rule) => &rule.base(),
         }
     }
 
     fn set_active(&mut self, active: bool) {
         match self {
-            PostingRule::Text(rule) => rule.base.is_active = active,
-            PostingRule::Poll(rule) => rule.base.is_active = active,
+            PostingRule::Text(rule) => rule.set_active(active),
+            PostingRule::Poll(rule) => rule.set_active(active),
         }
     }
 }

@@ -39,11 +39,11 @@ pub async fn handle(event: LambdaEvent<SchedulerEvent>) -> Result<(), Error> {
     };
 
     if !posting_rule.is_valid() {
-        return Err(format!("Posting rule is misconfigured: {}", posting_rule.base().id).into());
+        return Err(format!("Posting rule is misconfigured: {}", posting_rule.id()).into());
     }
 
-    if !posting_rule.base().is_active {
-        return Err(format!("Posting rule is not active: {}", posting_rule.base().id).into());
+    if !posting_rule.is_active() {
+        return Err(format!("Posting rule is not active: {}", posting_rule.id()).into());
     }
 
     let bots_table_name = match std::env::var("BOTS_TABLE") {
@@ -54,13 +54,13 @@ pub async fn handle(event: LambdaEvent<SchedulerEvent>) -> Result<(), Error> {
     };
 
     let bot_data = db
-        .get_item::<BotData>(&bots_table_name, &posting_rule.base().bot_id)
+        .get_item::<BotData>(&bots_table_name, posting_rule.bot_id())
         .await?;
 
     let bot_data = match bot_data {
         Some(data) => data,
         None => {
-            return Err(format!("Bot data not found: {}", posting_rule.base().bot_id).into());
+            return Err(format!("Bot data not found: {}", posting_rule.bot_id()).into());
         }
     };
 
@@ -72,7 +72,7 @@ pub async fn handle(event: LambdaEvent<SchedulerEvent>) -> Result<(), Error> {
 
     post_message(&bot, &posting_rule, post_repository).await?;
 
-    info!(post_id = %posting_rule.base().id, "Posting completed successfully");
+    info!(post_id = %posting_rule.id(), "Posting completed successfully");
 
     Ok(())
 }
@@ -98,7 +98,7 @@ async fn post_message(
             let text = replace_variables(&text_posting_rule.content.text);
             let message = bot.send_text(chat_id.clone(), topic_id, &text).await?;
 
-            if text_posting_rule.base.should_pin {
+            if text_posting_rule.should_pin() {
                 bot.pin_message(chat_id.clone(), message.id).await?;
             }
 
@@ -126,7 +126,7 @@ async fn post_message(
                 )
                 .await?;
 
-            if poll_posting_rule.base.should_pin {
+            if poll_posting_rule.should_pin() {
                 bot.pin_message(chat_id.clone(), message.id).await?;
             }
 
@@ -148,7 +148,7 @@ async fn post_message(
                 Some(action_log) => {
                     info!(
                         "Poll action log enabled for posting rule {}, messages will be sent to chat {}",
-                        poll_posting_rule.base.id, action_log.chat_id()
+                        poll_posting_rule.id(), action_log.chat_id()
                     );
 
                     let poll_action_log_message =
@@ -167,7 +167,7 @@ async fn post_message(
                 None => {
                     info!(
                         "Poll action log not enabled for posting rule {}, no messages will be sent",
-                        poll_posting_rule.base.id
+                        poll_posting_rule.id()
                     );
                 }
             }
@@ -216,17 +216,16 @@ async fn create_poll_action_log(
 
     let poll_action_log = PollActionLog {
         id: poll_id.to_string(),
-        chat_id: poll_posting_rule.base.chat_id,
-        topic_id: poll_posting_rule.base.topic_id,
+        chat_id: poll_posting_rule.chat_id().0,
+        topic_id: poll_posting_rule.topic_id().map(|id| id.0),
         message_id,
         action_log_message_id: action_log_message_id.0,
-        posting_rule_id: poll_posting_rule.base.id.to_string(),
+        posting_rule_id: poll_posting_rule.id().to_string(),
         text: text.to_string(),
         records: vec![],
-        timezone: poll_posting_rule.base.timezone.clone(),
+        timezone: poll_posting_rule.timezone().to_string(),
         expires_at: poll_posting_rule
-            .base
-            .expire_after_hours
+            .expire_after_hours()
             .map(date::calculate_expires_at),
         version: 0,
     };

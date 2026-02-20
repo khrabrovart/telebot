@@ -1,6 +1,5 @@
-use serde::{Deserialize, Serialize};
-
 use crate::data::{post::base_post::BasePost, posting_rule::TextPostingRule};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
@@ -23,7 +22,7 @@ impl TextPost {
         timestamp: i64,
         text: &str,
     ) -> Self {
-        let base = BasePost::new(&text_posting_rule.base, message_id, timestamp);
+        let base = BasePost::new(text_posting_rule, message_id, timestamp);
         let content = TextPostContent {
             text: text.to_string(),
         };

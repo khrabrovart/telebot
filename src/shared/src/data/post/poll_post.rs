@@ -1,6 +1,5 @@
-use serde::{Deserialize, Serialize};
-
 use crate::data::{post::BasePost, posting_rule::PollPostingRule};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
@@ -25,7 +24,7 @@ impl PollPost {
         question: &str,
         options: &Vec<String>,
     ) -> Self {
-        let base = BasePost::new(&poll_posting_rule.base, message_id, timestamp);
+        let base = BasePost::new(poll_posting_rule, message_id, timestamp);
         let content = PollPostContent {
             question: question.to_string(),
             options: options.clone(),

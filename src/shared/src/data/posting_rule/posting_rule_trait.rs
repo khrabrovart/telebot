@@ -1,6 +1,5 @@
-use teloxide::types::{ChatId, MessageId};
-
 use crate::data::posting_rule::BasePostingRule;
+use teloxide::types::{ChatId, MessageId};
 
 pub trait PostingRuleTrait {
     fn base(&self) -> &BasePostingRule;
