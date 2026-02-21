@@ -1,4 +1,4 @@
-use agent_lambda::handler;
+use agent_lambda::AppContext;
 use lambda_http::{run, service_fn, Error};
 
 #[tokio::main]
@@ -13,5 +13,8 @@ async fn main() -> Result<(), Error> {
         .without_time()
         .init();
 
-    run(service_fn(handler::handle)).await
+    let config = aws_config::load_from_env().await;
+    let app = AppContext::from_config(config).await;
+
+    run(service_fn(|event| agent_lambda::handle(event, &app))).await
 }

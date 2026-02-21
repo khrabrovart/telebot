@@ -1,13 +1,12 @@
+use crate::{
+    processor::{access_validator, menus},
+    TelegramBotClient,
+};
 use anyhow::Error;
 use telebot_shared::data::BotData;
 use teloxide::{
     dispatching::dialogue::GetChatId,
     types::{Message, Recipient, Update},
-};
-
-use crate::{
-    processor::{access_validator, menus},
-    TelegramBotClient,
 };
 
 pub async fn process(

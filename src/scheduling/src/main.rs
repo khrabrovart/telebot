@@ -1,7 +1,7 @@
 use lambda_runtime::{service_fn, Error};
 use scheduling_lambda::handle;
 
-// TODO; Rename lambda to schedule-sync or something
+// TODO: Rename lambda to schedule-sync or something
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {

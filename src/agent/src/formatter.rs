@@ -46,7 +46,7 @@ pub fn format_rule(posting_rule: &PostingRule, chat_name: &str) -> String {
 
     // TODO: Add all posting rule information in the text
     let formatted_rule = format!(
-        "<b>{}</b>\n\nКанал: <b>{}</b>\nРасписание: <b>{}</b>\nЗакрепление: <b>{}</b>\nВалидация: <b>{}</b>\nСтатус: <b>{}</b>\n\n{}",
+        "<b>{}</b>\n\nКанал: <b>{}</b>\nРасписание: <b>{}</b>\nЗакрепление: {}\nКорректность данных: {}\nСтатус: <b>{}</b>\n\n{}",
         name, chat_name, schedule, will_pin, is_valid, status, text
     );
 

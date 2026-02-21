@@ -5,10 +5,9 @@ use std::collections::HashMap;
 use telebot_shared::{
     aws::DynamoDbClient,
     data::{
-        PollActionLog, PollActionLogRecord, PollPostingRule, PollPostingRuleActionLogOutput,
-        PostingRule,
+        PollActionLog, PollActionLogRecord, PollActionLogRepository, PollPostingRule,
+        PollPostingRuleActionLogOutput, PostingRule, PostingRuleRepository,
     },
-    repositories::PollActionLogRepository,
 };
 use teloxide::types::{MessageId, PollAnswer, Recipient};
 
@@ -28,17 +27,10 @@ pub async fn process(
         None => return Ok(()),
     };
 
-    let posting_rules_table_name = match std::env::var("POSTING_RULES_TABLE") {
-        Ok(val) => val,
-        Err(_) => {
-            return Err(anyhow::anyhow!(
-                "POSTING_RULES_TABLE environment variable is not set"
-            ));
-        }
-    };
+    let posting_rule_repository = PostingRuleRepository::new(db.client.clone()).await?;
 
-    let posting_rule = db
-        .get_item::<PostingRule>(&posting_rules_table_name, &poll_action_log.posting_rule_id)
+    let posting_rule = posting_rule_repository
+        .get(&poll_action_log.posting_rule_id)
         .await?;
 
     let posting_rule = match posting_rule {

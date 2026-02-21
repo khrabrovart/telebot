@@ -4,11 +4,10 @@ use lambda_runtime::{Error, LambdaEvent};
 use telebot_shared::{
     aws::DynamoDbClient,
     data::{
-        BotData, PollActionLog, PollPost, PollPostingRule, PollPostingRuleActionLog,
-        PollPostingRuleActionLogOutput, Post, PostingRule, PostingRuleTrait, SchedulerEvent,
-        TextPost,
+        BotDataRepository, PollActionLog, PollActionLogRepository, PollPost, PollPostingRule,
+        PollPostingRuleActionLog, PollPostingRuleActionLogOutput, Post, PostRepository,
+        PostingRule, PostingRuleRepository, PostingRuleTrait, SchedulerEvent, TextPost,
     },
-    repositories::{PollActionLogRepository, PostRepository},
 };
 use teloxide::types::{Message, Recipient};
 use tracing::info;
@@ -18,16 +17,12 @@ pub async fn handle(event: LambdaEvent<SchedulerEvent>) -> Result<(), Error> {
 
     info!(posting_rule_id = %payload.posting_rule_id, "Received event");
 
-    let posting_rules_table_name = match std::env::var("POSTING_RULES_TABLE") {
-        Ok(val) => val,
-        Err(_) => {
-            return Err("POSTING_RULES_TABLE environment variable not set".into());
-        }
-    };
-
     let db = DynamoDbClient::new().await;
-    let posting_rule = db
-        .get_item::<PostingRule>(&posting_rules_table_name, &payload.posting_rule_id)
+
+    let posting_rule_repository = PostingRuleRepository::new(db.client.clone()).await?;
+
+    let posting_rule = posting_rule_repository
+        .get(&payload.posting_rule_id)
         .await?;
 
     let posting_rule = match posting_rule {
@@ -45,16 +40,9 @@ pub async fn handle(event: LambdaEvent<SchedulerEvent>) -> Result<(), Error> {
         return Err(format!("Posting rule is not active: {}", posting_rule.id()).into());
     }
 
-    let bots_table_name = match std::env::var("BOTS_TABLE") {
-        Ok(val) => val,
-        Err(_) => {
-            return Err("BOTS_TABLE environment variable not set".into());
-        }
-    };
+    let bot_data_repository = BotDataRepository::new(&db).await?;
 
-    let bot_data = db
-        .get_item::<BotData>(&bots_table_name, posting_rule.bot_id())
-        .await?;
+    let bot_data = bot_data_repository.get(posting_rule.bot_id()).await?;
 
     let bot_data = match bot_data {
         Some(data) => data,

@@ -3,10 +3,10 @@ use crate::{
     processor::{access_validator, menus},
     TelegramBotClient,
 };
-use anyhow::{anyhow, Error};
+use anyhow::Error;
 use telebot_shared::{
     aws::DynamoDbClient,
-    data::{BotData, PostingRule, PostingRuleTrait},
+    data::{BotData, PostingRule, PostingRuleRepository, PostingRuleTrait},
 };
 use teloxide::{
     dispatching::dialogue::GetChatId,
@@ -44,12 +44,11 @@ pub async fn process(
 
     let message_id = callback_query.message.as_ref().unwrap().id();
 
-    let posting_rules_table_name = std::env::var("POSTING_RULES_TABLE")
-        .map_err(|_| anyhow!("POSTING_RULES_TABLE environment variable not set"))?;
+    let posting_rule_repository = PostingRuleRepository::new(db.client.clone()).await?;
 
     match command {
         "list_rules" => {
-            let posting_rules = db.get_all::<PostingRule>(&posting_rules_table_name).await?;
+            let posting_rules = posting_rule_repository.get_all().await?;
             let filtered_rules: Vec<PostingRule> = posting_rules
                 .iter()
                 .filter(|posting_rule| posting_rule.bot_id() == bot.bot_id)
@@ -69,9 +68,7 @@ pub async fn process(
         "rule_details" => {
             let posting_rule_id = params[0];
 
-            let posting_rule = db
-                .get_item::<PostingRule>(&posting_rules_table_name, posting_rule_id)
-                .await?;
+            let posting_rule = posting_rule_repository.get(posting_rule_id).await?;
 
             let posting_rule = match posting_rule {
                 Some(r) => r,
@@ -98,10 +95,7 @@ pub async fn process(
         }
         "activate_rule" => {
             let posting_rule_id = params[0];
-
-            let posting_rule = db
-                .get_item::<PostingRule>(&posting_rules_table_name, posting_rule_id)
-                .await?;
+            let posting_rule = posting_rule_repository.get(posting_rule_id).await?;
 
             let mut posting_rule = match posting_rule {
                 Some(r) => r,
@@ -113,8 +107,7 @@ pub async fn process(
 
             posting_rule.set_active(true);
 
-            db.put_item(&posting_rules_table_name, &posting_rule)
-                .await?;
+            posting_rule_repository.put_item(&posting_rule).await?;
 
             let posting_rules_chat_id: Recipient = posting_rule.chat_id().into();
             let chat_name = bot.get_chat_title(posting_rules_chat_id).await?;
@@ -133,10 +126,7 @@ pub async fn process(
         }
         "deactivate_rule" => {
             let posting_rule_id = params[0];
-
-            let posting_rule = db
-                .get_item::<PostingRule>(&posting_rules_table_name, posting_rule_id)
-                .await?;
+            let posting_rule = posting_rule_repository.get(posting_rule_id).await?;
 
             let mut posting_rule = match posting_rule {
                 Some(r) => r,
@@ -148,8 +138,7 @@ pub async fn process(
 
             posting_rule.set_active(false);
 
-            db.put_item(&posting_rules_table_name, &posting_rule)
-                .await?;
+            posting_rule_repository.put_item(&posting_rule).await?;
 
             let posting_rules_chat_id: Recipient = posting_rule.chat_id().into();
             let chat_name = bot.get_chat_title(posting_rules_chat_id).await?;

@@ -1,8 +1,7 @@
+use crate::{aws::errors, data::poll_action_log::PollActionLog, env};
 use anyhow::Error;
 use aws_sdk_dynamodb::{types::AttributeValue, Client};
 use tracing::warn;
-
-use crate::{aws::errors, data::PollActionLog, env};
 
 pub struct PollActionLogRepository {
     client: Client,

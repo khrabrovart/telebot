@@ -18,7 +18,7 @@ impl PostRepository {
         })
     }
 
-    pub async fn get(&self, chat_id: i64, message_id: i32) -> Result<Post, Error> {
+    pub async fn get(&self, chat_id: i64, message_id: i32) -> Result<Option<Post>, Error> {
         let result = self
             .client
             .get_item()
@@ -31,11 +31,7 @@ impl PostRepository {
 
         match result.item {
             Some(item) => Ok(serde_dynamo::from_item(item)?),
-            None => Err(anyhow::anyhow!(
-                "Post not found for ChatId: {}, MessageId: {}",
-                chat_id,
-                message_id
-            )),
+            None => Ok(None),
         }
     }
 
