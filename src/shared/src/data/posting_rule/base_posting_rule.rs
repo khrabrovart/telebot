@@ -18,5 +18,5 @@ pub struct BasePostingRule {
     #[serde(default)]
     pub is_active: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub expire_after_hours: Option<i64>,
+    pub ttl_hours: Option<i64>,
 }

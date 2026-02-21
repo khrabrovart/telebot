@@ -1,4 +1,9 @@
+use crate::{
+    data::{PollPostingRule, PostingRuleTrait},
+    date,
+};
 use serde::{Deserialize, Serialize};
+use teloxide::types::{MessageId, PollId};
 
 // TODO: Remove unnecessary fields that exist in the Post and use the Post as the source of truth for the post data instead of duplicating it in the PollActionLog
 
@@ -34,4 +39,35 @@ pub struct PollActionLogRecord {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub option_text: Option<String>,
     pub timestamp: i64,
+}
+
+impl PollActionLog {
+    pub fn new(
+        poll_posting_rule: &PollPostingRule,
+        poll_id: PollId,
+        message_id: MessageId,
+        action_log_message_id: MessageId,
+        text: String,
+    ) -> Self {
+        let ttl_hours = match &poll_posting_rule.poll_action_log {
+            Some(action_log) => action_log.ttl_hours,
+            None => None,
+        };
+
+        let expires_at = ttl_hours.map(|ttl| date::calculate_expires_at(ttl));
+
+        PollActionLog {
+            id: poll_id.to_string(),
+            chat_id: poll_posting_rule.chat_id().0,
+            topic_id: poll_posting_rule.topic_id().map(|topic_id| topic_id.0),
+            message_id: message_id.0,
+            action_log_message_id: action_log_message_id.0,
+            posting_rule_id: poll_posting_rule.id().to_string(),
+            text,
+            records: vec![],
+            timezone: poll_posting_rule.timezone().to_string(),
+            expires_at,
+            version: 0,
+        }
+    }
 }

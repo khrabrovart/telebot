@@ -156,11 +156,10 @@ async fn post_message(
                             .await?;
 
                     create_poll_action_log(
-                        message.poll().unwrap().id.clone(),
+                        message,
+                        poll_action_log_message,
                         poll_posting_rule,
-                        poll_action_log_message.id,
                         &question,
-                        message.id.0,
                     )
                     .await?;
                 }
@@ -204,31 +203,24 @@ async fn post_poll_action_log_message(
 }
 
 async fn create_poll_action_log(
-    poll_id: PollId,
+    message: Message,
+    poll_action_log_message: Message,
     poll_posting_rule: &PollPostingRule,
-    action_log_message_id: MessageId,
     text: &str,
-    message_id: i32,
 ) -> Result<(), anyhow::Error> {
     let poll_action_log_repository = PollActionLogRepository::new().await?;
 
-    // TODO: Move struct creating to their own functions new()
+    let poll_id = message.poll().unwrap().id.clone();
+    let message_id = message.id;
+    let poll_action_log_message_id = poll_action_log_message.id;
 
-    let poll_action_log = PollActionLog {
-        id: poll_id.to_string(),
-        chat_id: poll_posting_rule.chat_id().0,
-        topic_id: poll_posting_rule.topic_id().map(|id| id.0),
+    let poll_action_log = PollActionLog::new(
+        poll_posting_rule,
+        poll_id,
         message_id,
-        action_log_message_id: action_log_message_id.0,
-        posting_rule_id: poll_posting_rule.id().to_string(),
-        text: text.to_string(),
-        records: vec![],
-        timezone: poll_posting_rule.timezone().to_string(),
-        expires_at: poll_posting_rule
-            .expire_after_hours()
-            .map(date::calculate_expires_at),
-        version: 0,
-    };
+        poll_action_log_message_id,
+        text.to_string(),
+    );
 
     poll_action_log_repository.put(&poll_action_log).await?;
 

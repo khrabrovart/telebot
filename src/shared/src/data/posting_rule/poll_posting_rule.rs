@@ -28,6 +28,8 @@ pub struct PollPostingRuleActionLog {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub topic_id: Option<i32>,
     pub output: PollPostingRuleActionLogOutput,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ttl_hours: Option<i64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

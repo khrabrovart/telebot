@@ -44,8 +44,8 @@ pub trait PostingRuleTrait {
         self.base().is_active
     }
 
-    fn expire_after_hours(&self) -> Option<i64> {
-        self.base().expire_after_hours
+    fn ttl_hours(&self) -> Option<i64> {
+        self.base().ttl_hours
     }
 
     fn set_active(&mut self, active: bool);

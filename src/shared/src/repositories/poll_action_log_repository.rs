@@ -19,7 +19,7 @@ impl PollActionLogRepository {
         Ok(Self { client, table_name })
     }
 
-    pub async fn get(&self, id: &str) -> Result<PollActionLog, Error> {
+    pub async fn get(&self, id: &str) -> Result<Option<PollActionLog>, Error> {
         let result = self
             .client
             .get_item()
@@ -31,7 +31,7 @@ impl PollActionLogRepository {
 
         match result.item {
             Some(item) => Ok(serde_dynamo::from_item(item)?),
-            None => Err(anyhow::anyhow!("Poll action log not found for id: {}", id)),
+            None => Ok(None),
         }
     }
 

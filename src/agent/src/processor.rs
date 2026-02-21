@@ -1,4 +1,4 @@
-use crate::{formatter, poll_answer_processor, TelegramBotClient};
+use crate::{formatter, PollAnswerProcessor, TelegramBotClient};
 use anyhow::{anyhow, Error};
 use telebot_shared::{
     aws::DynamoDbClient,
@@ -39,9 +39,11 @@ pub async fn process_update(
     }
 
     if let UpdateKind::PollAnswer(poll_answer) = &update.kind {
-        poll_answer_processor::process_poll_answer(poll_answer, &bot, db).await?;
+        PollAnswerProcessor::process(poll_answer, &bot, db).await?;
         return Ok(());
     }
+
+    // TODO: Put processors into their own modules and call them here, instead of handling callback queries in this method
 
     let query = match &update.kind {
         UpdateKind::CallbackQuery(q) => q,

@@ -21,9 +21,8 @@ pub struct BasePost {
 impl BasePost {
     pub fn new(posting_rule: &impl PostingRuleTrait, message_id: i32, timestamp: i64) -> Self {
         let expires_at = posting_rule
-            .base()
-            .expire_after_hours
-            .map(date::calculate_expires_at);
+            .ttl_hours()
+            .map(|ttl| date::calculate_expires_at(ttl));
 
         BasePost {
             chat_id: posting_rule.base().chat_id,
