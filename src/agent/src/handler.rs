@@ -42,7 +42,7 @@ async fn handle_internal(request: Request) -> Result<(), Error> {
 
     info!(bot_id = %bot_data.id, "Bot data found");
 
-    processor::process_update(&update, &bot_data, &db).await?;
+    processor::process(&update, &bot_data, &db).await?;
 
     Ok(())
 }

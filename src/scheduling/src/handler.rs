@@ -41,7 +41,7 @@ async fn process_update(
     posting_rule: &PostingRule,
     scheduler: &SchedulerClient,
 ) -> Result<(), Error> {
-    if !posting_rule.is_valid() {
+    if !posting_rule.is_valid().await {
         scheduler.delete_schedule(posting_rule.id()).await?;
         return Ok(());
     }

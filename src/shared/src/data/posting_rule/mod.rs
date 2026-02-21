@@ -3,6 +3,7 @@ mod core;
 mod poll;
 mod text;
 mod traits;
+mod validation;
 
 pub use base::BasePostingRule;
 pub use core::PostingRule;

@@ -37,7 +37,7 @@ pub async fn handle(event: LambdaEvent<SchedulerEvent>) -> Result<(), Error> {
         }
     };
 
-    if !posting_rule.is_valid() {
+    if !posting_rule.is_valid().await {
         return Err(format!("Posting rule is misconfigured: {}", posting_rule.id()).into());
     }
 

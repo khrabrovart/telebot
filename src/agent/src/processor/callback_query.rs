@@ -1,4 +1,8 @@
-use crate::{formatter, PollAnswerProcessor, TelegramBotClient};
+use crate::{
+    formatter,
+    processor::{access_validator, menus},
+    TelegramBotClient,
+};
 use anyhow::{anyhow, Error};
 use telebot_shared::{
     aws::DynamoDbClient,
@@ -6,50 +10,16 @@ use telebot_shared::{
 };
 use teloxide::{
     dispatching::dialogue::GetChatId,
-    types::{InlineKeyboardButton, InlineKeyboardMarkup, Recipient, Update, UpdateKind},
+    types::{CallbackQuery, Recipient, Update},
 };
 
-pub async fn process_update(
+pub async fn process(
+    callback_query: &CallbackQuery,
     update: &Update,
+    bot: &TelegramBotClient,
     bot_data: &BotData,
     db: &DynamoDbClient,
 ) -> Result<(), Error> {
-    let bot = TelegramBotClient::new(bot_data).await?;
-
-    if let UpdateKind::Message(msg) = &update.kind {
-        let chat_id: Recipient = match update.chat_id().unwrap().as_user() {
-            Some(user) => user.into(),
-            None => {
-                return Ok(());
-            }
-        };
-
-        match validate_access(update, chat_id.clone(), bot_data, &bot).await? {
-            true => (),
-            false => return Ok(()),
-        }
-
-        if let Some("/start") = msg.text() {
-            bot.send_text_with_markup(chat_id.clone(), "🏠 Главное меню", &main_menu())
-                .await?;
-            return Ok(());
-        } else {
-            return Ok(());
-        }
-    }
-
-    if let UpdateKind::PollAnswer(poll_answer) = &update.kind {
-        PollAnswerProcessor::process(poll_answer, &bot, db).await?;
-        return Ok(());
-    }
-
-    // TODO: Put processors into their own modules and call them here, instead of handling callback queries in this method
-
-    let query = match &update.kind {
-        UpdateKind::CallbackQuery(q) => q,
-        _ => return Ok(()),
-    };
-
     let chat_id: Recipient = match update.chat_id().unwrap().as_user() {
         Some(user) => user.into(),
         None => {
@@ -57,12 +27,12 @@ pub async fn process_update(
         }
     };
 
-    match validate_access(update, chat_id.clone(), bot_data, &bot).await? {
+    match access_validator::validate_access(update, chat_id.clone(), bot_data, bot).await? {
         true => (),
         false => return Ok(()),
     }
 
-    let parts = query
+    let parts = callback_query
         .data
         .as_deref()
         .unwrap()
@@ -72,7 +42,7 @@ pub async fn process_update(
     let command = parts[0];
     let params = &parts[1..];
 
-    let message_id = query.message.as_ref().unwrap().id();
+    let message_id = callback_query.message.as_ref().unwrap().id();
 
     let posting_rules_table_name = std::env::var("POSTING_RULES_TABLE")
         .map_err(|_| anyhow!("POSTING_RULES_TABLE environment variable not set"))?;
@@ -90,11 +60,11 @@ pub async fn process_update(
                 chat_id.clone(),
                 message_id,
                 "📋 Список правил",
-                &list_rules_menu(&filtered_rules),
+                &menus::list_rules_menu(&filtered_rules),
             )
             .await?;
 
-            bot.answer_callback_query(query.id.clone()).await?;
+            bot.answer_callback_query(callback_query.id.clone()).await?;
         }
         "rule_details" => {
             let posting_rule_id = params[0];
@@ -120,11 +90,11 @@ pub async fn process_update(
                 chat_id.clone(),
                 message_id,
                 &formatted_rule,
-                &rule_details_menu(&posting_rule),
+                &menus::rule_details_menu(&posting_rule),
             )
             .await?;
 
-            bot.answer_callback_query(query.id.clone()).await?;
+            bot.answer_callback_query(callback_query.id.clone()).await?;
         }
         "activate_rule" => {
             let posting_rule_id = params[0];
@@ -155,11 +125,11 @@ pub async fn process_update(
                 chat_id.clone(),
                 message_id,
                 &formatted_rule,
-                &rule_details_menu(&posting_rule),
+                &menus::rule_details_menu(&posting_rule),
             )
             .await?;
 
-            bot.answer_callback_query(query.id.clone()).await?;
+            bot.answer_callback_query(callback_query.id.clone()).await?;
         }
         "deactivate_rule" => {
             let posting_rule_id = params[0];
@@ -190,95 +160,27 @@ pub async fn process_update(
                 chat_id.clone(),
                 message_id,
                 &formatted_rule,
-                &rule_details_menu(&posting_rule),
+                &menus::rule_details_menu(&posting_rule),
             )
             .await?;
 
-            bot.answer_callback_query(query.id.clone()).await?;
+            bot.answer_callback_query(callback_query.id.clone()).await?;
         }
         "back" => {
-            let message_id = query.message.as_ref().unwrap().id();
+            let message_id = callback_query.message.as_ref().unwrap().id();
 
             bot.edit_message_text_with_markup(
                 chat_id.clone(),
                 message_id,
                 "🏠 Главное меню",
-                &main_menu(),
+                &menus::main_menu(),
             )
             .await?;
 
-            bot.answer_callback_query(query.id.clone()).await?;
+            bot.answer_callback_query(callback_query.id.clone()).await?;
         }
         _ => return Ok(()),
     }
 
     Ok(())
-}
-
-async fn validate_access(
-    update: &Update,
-    chat_id: Recipient,
-    bot_data: &BotData,
-    bot: &TelegramBotClient,
-) -> Result<bool, Error> {
-    let sender_id = update
-        .from()
-        .map(|u| u.username.as_ref().unwrap().clone())
-        .unwrap();
-
-    let admins = &bot_data.admins;
-
-    if !admins.contains(&sender_id) {
-        bot.send_text(
-            chat_id,
-            "У вас недостаточно прав для выполнения этого действия",
-        )
-        .await?;
-
-        return Ok(false);
-    }
-
-    Ok(true)
-}
-
-fn main_menu() -> InlineKeyboardMarkup {
-    InlineKeyboardMarkup::new(vec![vec![InlineKeyboardButton::callback(
-        "📋 Список правил",
-        "list_rules",
-    )]])
-}
-
-fn list_rules_menu(posting_rules: &[PostingRule]) -> InlineKeyboardMarkup {
-    let mut buttons: Vec<Vec<InlineKeyboardButton>> = posting_rules
-        .iter()
-        .map(|posting_rule| {
-            vec![InlineKeyboardButton::callback(
-                posting_rule.name(),
-                format!("rule_details:{}", posting_rule.id()),
-            )]
-        })
-        .collect();
-
-    buttons.push(vec![InlineKeyboardButton::callback("⬅️ Назад", "back")]);
-
-    InlineKeyboardMarkup::new(buttons)
-}
-
-fn rule_details_menu(posting_rule: &PostingRule) -> InlineKeyboardMarkup {
-    let action = if posting_rule.is_active() {
-        vec![InlineKeyboardButton::callback(
-            "🔴 Выключить",
-            format!("deactivate_rule:{}", posting_rule.id()),
-        )]
-    } else {
-        vec![InlineKeyboardButton::callback(
-            "🟢 Включить",
-            format!("activate_rule:{}", posting_rule.id()),
-        )]
-    };
-
-    InlineKeyboardMarkup::new(vec![
-        action,
-        vec![InlineKeyboardButton::callback("⬅️ Назад", "back")],
-    ])
 }

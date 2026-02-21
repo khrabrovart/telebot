@@ -1,5 +1,6 @@
 use crate::data::{
-    posting_rule::BasePostingRule, PollPostingRule, PostingRuleTrait, TextPostingRule,
+    posting_rule::{validation::PostingRuleValidator, BasePostingRule},
+    PollPostingRule, PostingRuleTrait, TextPostingRule,
 };
 use serde::{Deserialize, Serialize};
 
@@ -13,24 +14,8 @@ pub enum PostingRule {
 }
 
 impl PostingRule {
-    pub fn is_valid(&self) -> bool {
-        match self {
-            PostingRule::Text(rule) => {
-                !rule.bot_id().is_empty()
-                    && !rule.name().is_empty()
-                    && !rule.schedule().is_empty()
-                    && !rule.timezone().is_empty()
-                    && !rule.content.text.is_empty()
-            }
-            PostingRule::Poll(rule) => {
-                !rule.bot_id().is_empty()
-                    && !rule.name().is_empty()
-                    && !rule.schedule().is_empty()
-                    && !rule.timezone().is_empty()
-                    && !rule.content.question.is_empty()
-                    && !rule.content.options.is_empty()
-            }
-        }
+    pub async fn is_valid(&self) -> bool {
+        PostingRuleValidator::validate(self).await.is_empty()
     }
 }
 
