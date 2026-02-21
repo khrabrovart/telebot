@@ -8,10 +8,9 @@ use telebot_shared::{
         PollPostingRuleActionLogOutput, Post, PostingRule, PostingRuleTrait, SchedulerEvent,
         TextPost,
     },
-    date,
     repositories::{PollActionLogRepository, PostRepository},
 };
-use teloxide::types::{Message, MessageId, PollId, Recipient};
+use teloxide::types::{Message, Recipient};
 use tracing::info;
 
 pub async fn handle(event: LambdaEvent<SchedulerEvent>) -> Result<(), Error> {
