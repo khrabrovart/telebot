@@ -3,7 +3,7 @@ use crate::data::PollPostingRule;
 pub struct PollPostingRuleValidator;
 
 impl PollPostingRuleValidator {
-    pub async fn validate(posting_rule: &PollPostingRule, issues: &mut Vec<String>) {
+    pub fn validate(posting_rule: &PollPostingRule, issues: &mut Vec<String>) {
         if posting_rule.content.question.trim().is_empty() {
             issues.push("Question is empty".to_string());
         }

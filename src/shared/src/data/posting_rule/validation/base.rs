@@ -3,7 +3,7 @@ use crate::data::BasePostingRule;
 pub struct BasePostingRuleValidator;
 
 impl BasePostingRuleValidator {
-    pub async fn validate(posting_rule: &BasePostingRule, issues: &mut Vec<String>) {
+    pub fn validate(posting_rule: &BasePostingRule, issues: &mut Vec<String>) {
         if posting_rule.id.trim().is_empty() {
             issues.push("Id is empty".to_string());
         }

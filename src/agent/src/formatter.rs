@@ -15,6 +15,12 @@ pub fn format_rule(posting_rule: &PostingRule, chat_name: &str) -> String {
         "🔴 ВЫКЛЮЧЕНО"
     };
 
+    let is_valid = if posting_rule.is_valid() {
+        "✅"
+    } else {
+        "❌"
+    };
+
     let text = match posting_rule {
         PostingRule::Text(text_posting_rule) => &text_posting_rule.content.text,
         PostingRule::Poll(poll_posting_rule) => {
@@ -40,8 +46,8 @@ pub fn format_rule(posting_rule: &PostingRule, chat_name: &str) -> String {
 
     // TODO: Add all posting rule information in the text
     let formatted_rule = format!(
-        "<b>{}</b>\n\nКанал: <b>{}</b>\nРасписание: <b>{}</b>\nЗакрепление: <b>{}</b>\nСтатус: <b>{}</b>\n\n{}",
-        name, chat_name, schedule, will_pin, status, text
+        "<b>{}</b>\n\nКанал: <b>{}</b>\nРасписание: <b>{}</b>\nЗакрепление: <b>{}</b>\nВалидация: <b>{}</b>\nСтатус: <b>{}</b>\n\n{}",
+        name, chat_name, schedule, will_pin, is_valid, status, text
     );
 
     formatted_rule

@@ -14,8 +14,8 @@ pub enum PostingRule {
 }
 
 impl PostingRule {
-    pub async fn is_valid(&self) -> bool {
-        PostingRuleValidator::validate(self).await.is_empty()
+    pub fn is_valid(&self) -> bool {
+        PostingRuleValidator::validate(self).is_empty()
     }
 }
 
