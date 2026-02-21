@@ -37,8 +37,8 @@ impl PostingRule {
 impl PostingRuleTrait for PostingRule {
     fn base(&self) -> &BasePostingRule {
         match self {
-            PostingRule::Text(rule) => &rule.base(),
-            PostingRule::Poll(rule) => &rule.base(),
+            PostingRule::Text(rule) => rule.base(),
+            PostingRule::Poll(rule) => rule.base(),
         }
     }
 

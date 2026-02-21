@@ -1,13 +1,11 @@
-mod base_posting_rule;
-mod poll_posting_rule;
-mod posting_rule;
-mod posting_rule_trait;
-mod text_posting_rule;
+mod base;
+mod core;
+mod poll;
+mod text;
+mod traits;
 
-pub use base_posting_rule::BasePostingRule;
-pub use poll_posting_rule::{
-    PollPostingRule, PollPostingRuleActionLog, PollPostingRuleActionLogOutput,
-};
-pub use posting_rule::PostingRule;
-pub use posting_rule_trait::PostingRuleTrait;
-pub use text_posting_rule::TextPostingRule;
+pub use base::BasePostingRule;
+pub use core::PostingRule;
+pub use poll::{PollPostingRule, PollPostingRuleActionLog, PollPostingRuleActionLogOutput};
+pub use text::TextPostingRule;
+pub use traits::PostingRuleTrait;

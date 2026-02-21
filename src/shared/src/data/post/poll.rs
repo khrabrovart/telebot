@@ -25,12 +25,12 @@ impl PollPost {
         message_id: i32,
         timestamp: i64,
         question: &str,
-        options: &Vec<String>,
+        options: &[String],
     ) -> Self {
         let base = BasePost::new(poll_posting_rule, message_id, timestamp);
         let content = PollPostContent {
             question: question.to_string(),
-            options: options.clone(),
+            options: options.to_vec(),
         };
 
         PollPost { base, content }

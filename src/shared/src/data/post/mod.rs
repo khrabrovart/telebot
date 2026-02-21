@@ -1,11 +1,11 @@
-mod base_post;
-mod poll_post;
-mod post;
-mod post_trait;
-mod text_post;
+mod base;
+mod core;
+mod poll;
+mod text;
+mod traits;
 
-pub use base_post::BasePost;
-pub use poll_post::PollPost;
-pub use post::Post;
-pub use post_trait::PostTrait;
-pub use text_post::TextPost;
+pub use base::BasePost;
+pub use core::Post;
+pub use poll::PollPost;
+pub use text::TextPost;
+pub use traits::PostTrait;

@@ -54,7 +54,7 @@ impl PollActionLog {
             None => None,
         };
 
-        let expires_at = ttl_hours.map(|ttl| date::calculate_expires_at(ttl));
+        let expires_at = ttl_hours.map(date::calculate_expires_at);
 
         PollActionLog {
             id: poll_id.to_string(),

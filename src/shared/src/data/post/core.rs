@@ -1,5 +1,5 @@
 use crate::data::{
-    post::{poll_post::PollPost, text_post::TextPost},
+    post::{PollPost, TextPost},
     PostTrait,
 };
 use serde::{Deserialize, Serialize};
@@ -12,7 +12,7 @@ pub enum Post {
 }
 
 impl PostTrait for Post {
-    fn base(&self) -> &crate::data::post::base_post::BasePost {
+    fn base(&self) -> &crate::data::post::BasePost {
         match self {
             Post::Text(text_post) => text_post.base(),
             Post::Poll(poll_post) => poll_post.base(),
