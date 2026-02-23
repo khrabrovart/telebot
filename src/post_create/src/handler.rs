@@ -104,7 +104,7 @@ async fn post_message(
         }
         PostingRule::Poll(poll_posting_rule) => {
             let question = replace_variables(&poll_posting_rule.content.question);
-            let message = bot
+            let post_message = bot
                 .send_poll(
                     chat_id.clone(),
                     topic_id,
@@ -114,38 +114,42 @@ async fn post_message(
                 .await?;
 
             if poll_posting_rule.should_pin() {
-                bot.pin_message(chat_id.clone(), message.id).await?;
+                bot.pin_message(chat_id.clone(), post_message.id).await?;
             }
 
             info!("Poll sent successfully, saving post to repository");
 
             let poll_post = PollPost::new(
                 poll_posting_rule,
-                message.id.0,
-                message.date.timestamp(),
+                post_message.id.0,
+                post_message.date.timestamp(),
                 &question,
                 &poll_posting_rule.content.options,
             );
-
             post_repository.put(&Post::Poll(poll_post)).await?;
 
             info!("Post saved successfully, checking if poll action log is enabled");
 
             match &poll_posting_rule.poll_action_log {
-                Some(action_log) => {
+                Some(poll_posting_rule_action_log) => {
                     info!(
                         "Poll action log enabled for posting rule {}, messages will be sent to chat {}",
-                        poll_posting_rule.id(), action_log.chat_id()
+                        poll_posting_rule.id(), poll_posting_rule_action_log.chat_id()
                     );
 
-                    let poll_action_log_message =
-                        post_poll_action_log_message(&question, action_log, bot, poll_posting_rule)
-                            .await?;
+                    let poll_action_log_message = post_poll_action_log_message(
+                        &question,
+                        poll_posting_rule_action_log,
+                        bot,
+                        poll_posting_rule,
+                    )
+                    .await?;
 
                     create_poll_action_log(
-                        message,
+                        post_message,
                         poll_action_log_message,
                         poll_posting_rule,
+                        poll_posting_rule_action_log,
                         &question,
                     )
                     .await?;
@@ -193,6 +197,7 @@ async fn create_poll_action_log(
     message: Message,
     poll_action_log_message: Message,
     poll_posting_rule: &PollPostingRule,
+    poll_posting_rule_action_log: &PollPostingRuleActionLog,
     text: &str,
 ) -> Result<(), anyhow::Error> {
     let poll_action_log_repository = PollActionLogRepository::new().await?;
@@ -203,6 +208,7 @@ async fn create_poll_action_log(
 
     let poll_action_log = PollActionLog::new(
         poll_posting_rule,
+        poll_posting_rule_action_log,
         poll_id,
         message_id,
         poll_action_log_message_id,

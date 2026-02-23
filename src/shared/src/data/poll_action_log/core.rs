@@ -1,5 +1,5 @@
 use crate::{
-    data::{PollPostingRule, PostingRuleTrait},
+    data::{PollPostingRule, PollPostingRuleActionLog, PostingRuleTrait},
     date,
 };
 use serde::{Deserialize, Serialize};
@@ -15,6 +15,9 @@ pub struct PollActionLog {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub topic_id: Option<i32>,
     pub message_id: i32,
+    pub action_log_chat_id: i64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub action_log_topic_id: Option<i32>,
     pub action_log_message_id: i32,
     pub posting_rule_id: String,
     pub text: String,
@@ -44,6 +47,7 @@ pub struct PollActionLogRecord {
 impl PollActionLog {
     pub fn new(
         poll_posting_rule: &PollPostingRule,
+        poll_posting_rule_action_log: &PollPostingRuleActionLog,
         poll_id: PollId,
         message_id: MessageId,
         action_log_message_id: MessageId,
@@ -61,6 +65,10 @@ impl PollActionLog {
             chat_id: poll_posting_rule.chat_id().0,
             topic_id: poll_posting_rule.topic_id().map(|topic_id| topic_id.0),
             message_id: message_id.0,
+            action_log_chat_id: poll_posting_rule_action_log.chat_id().0,
+            action_log_topic_id: poll_posting_rule_action_log
+                .topic_id()
+                .map(|topic_id| topic_id.0),
             action_log_message_id: action_log_message_id.0,
             posting_rule_id: poll_posting_rule.id().to_string(),
             text,
