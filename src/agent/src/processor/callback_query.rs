@@ -55,7 +55,7 @@ pub async fn process(
                 .cloned()
                 .collect();
 
-            filtered_rules.sort_by(|a, b| a.name().cmp(&b.name()));
+            filtered_rules.sort_by(|a, b| a.name().cmp(b.name()));
 
             bot.edit_message_text_with_markup(
                 chat_id.clone(),
