@@ -10,7 +10,7 @@ use telebot_shared::{
 };
 use teloxide::{
     dispatching::dialogue::GetChatId,
-    types::{CallbackQuery, Recipient, Update},
+    types::{CallbackQuery, MessageId, Recipient, Update},
 };
 
 pub async fn process(
@@ -41,29 +41,14 @@ pub async fn process(
 
     let command = parts[0];
     let params = &parts[1..];
-
     let message_id = callback_query.message.as_ref().unwrap().id();
 
     let posting_rule_repository = PostingRuleRepository::new(db.client.clone()).await?;
 
     match command {
         "list_rules" => {
-            let posting_rules = posting_rule_repository.get_all().await?;
-            let mut filtered_rules: Vec<PostingRule> = posting_rules
-                .iter()
-                .filter(|posting_rule| posting_rule.bot_id() == bot.bot_id)
-                .cloned()
-                .collect();
-
-            filtered_rules.sort_by(|a, b| a.name().cmp(b.name()));
-
-            bot.edit_message_text_with_markup(
-                chat_id.clone(),
-                message_id,
-                "📋 Список правил",
-                &menus::list_rules_menu(&filtered_rules),
-            )
-            .await?;
+            render_rules_list_menu(bot, chat_id.clone(), message_id, &posting_rule_repository)
+                .await?;
 
             bot.answer_callback_query(callback_query.id.clone()).await?;
         }
@@ -158,20 +143,63 @@ pub async fn process(
             bot.answer_callback_query(callback_query.id.clone()).await?;
         }
         "back" => {
-            let message_id = callback_query.message.as_ref().unwrap().id();
+            let target = params[0];
 
-            bot.edit_message_text_with_markup(
-                chat_id.clone(),
-                message_id,
-                "🏠 Главное меню",
-                &menus::main_menu(),
-            )
-            .await?;
+            match target {
+                "main_menu" => {
+                    bot.edit_message_text_with_markup(
+                        chat_id.clone(),
+                        message_id,
+                        "🏠 Главное меню",
+                        &menus::main_menu(),
+                    )
+                    .await?;
+                }
+                "list_rules" => {
+                    render_rules_list_menu(
+                        bot,
+                        chat_id.clone(),
+                        message_id,
+                        &posting_rule_repository,
+                    )
+                    .await?;
+                }
+                _ => {
+                    bot.send_text(chat_id.clone(), "Неверная команда").await?;
+                    return Ok(());
+                }
+            }
 
             bot.answer_callback_query(callback_query.id.clone()).await?;
         }
         _ => return Ok(()),
     }
+
+    Ok(())
+}
+
+async fn render_rules_list_menu(
+    bot: &TelegramBotClient,
+    chat_id: Recipient,
+    message_id: MessageId,
+    posting_rule_repository: &PostingRuleRepository,
+) -> Result<(), Error> {
+    let posting_rules = posting_rule_repository.get_all().await?;
+    let mut filtered_rules: Vec<PostingRule> = posting_rules
+        .iter()
+        .filter(|posting_rule| posting_rule.bot_id() == bot.bot_id)
+        .cloned()
+        .collect();
+
+    filtered_rules.sort_by(|a, b| a.name().cmp(b.name()));
+
+    bot.edit_message_text_with_markup(
+        chat_id.clone(),
+        message_id,
+        "📋 Список правил",
+        &menus::list_rules_menu(&filtered_rules),
+    )
+    .await?;
 
     Ok(())
 }

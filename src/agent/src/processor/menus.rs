@@ -19,7 +19,10 @@ pub fn list_rules_menu(posting_rules: &[PostingRule]) -> InlineKeyboardMarkup {
         })
         .collect();
 
-    buttons.push(vec![InlineKeyboardButton::callback("⬅️ Назад", "back")]);
+    buttons.push(vec![InlineKeyboardButton::callback(
+        "⬅️ Назад",
+        "back:list_rules",
+    )]);
 
     InlineKeyboardMarkup::new(buttons)
 }
@@ -39,6 +42,6 @@ pub fn rule_details_menu(posting_rule: &PostingRule) -> InlineKeyboardMarkup {
 
     InlineKeyboardMarkup::new(vec![
         action,
-        vec![InlineKeyboardButton::callback("⬅️ Назад", "back")],
+        vec![InlineKeyboardButton::callback("⬅️ Назад", "back:main_menu")],
     ])
 }
