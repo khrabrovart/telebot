@@ -155,11 +155,19 @@ async fn update_poll_action_log_message(
     let mut records_text = filtered_records
         .values()
         .map(|records| {
+            let last_name = records[0]
+                .actor_last_name
+                .clone()
+                .map_or("".to_string(), |ln| format!(" {}", ln));
+
+            let username = records[0]
+                .actor_username
+                .clone()
+                .map_or("".to_string(), |un| format!(" (@{})", un));
+
             let actor_name = format!(
-                "<b>{} {} (@{})</b>",
-                records[0].actor_first_name,
-                records[0].actor_last_name.clone().unwrap_or_default(),
-                records[0].actor_username.clone().unwrap_or_default()
+                "<b>{}{}{}</b>",
+                records[0].actor_first_name, last_name, username
             );
 
             let actions_list = records

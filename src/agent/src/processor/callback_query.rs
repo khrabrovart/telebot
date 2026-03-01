@@ -49,11 +49,13 @@ pub async fn process(
     match command {
         "list_rules" => {
             let posting_rules = posting_rule_repository.get_all().await?;
-            let filtered_rules: Vec<PostingRule> = posting_rules
+            let mut filtered_rules: Vec<PostingRule> = posting_rules
                 .iter()
                 .filter(|posting_rule| posting_rule.bot_id() == bot.bot_id)
                 .cloned()
                 .collect();
+
+            filtered_rules.sort_by(|a, b| a.name().cmp(&b.name()));
 
             bot.edit_message_text_with_markup(
                 chat_id.clone(),
