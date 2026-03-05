@@ -186,7 +186,7 @@ async fn post_poll_action_log_message(
     };
 
     let text = format!(
-        "<b>Лог событий опроса</b>\n{}\n\n{}\n\n{}\n\n<i>Здесь будут отображаться действия с данным опросом</i>",
+        "<b>Лог событий голосования</b>\n{}\n\n{}\n\n{}\n\n<i>Здесь будут отображаться действия с данным голосованием</i>",
         poll_posting_rule.name(),
         output_description,
         message_text

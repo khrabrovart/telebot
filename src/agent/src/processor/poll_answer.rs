@@ -215,7 +215,7 @@ async fn update_action_log_message(
         .join("\n\n");
 
     if records_text.is_empty() {
-        records_text = "<i>Здесь будут отображаться действия с данным опросом</i>".to_string();
+        records_text = "<i>Здесь будут отображаться действия с данным голосованием</i>".to_string();
     }
 
     let output_description = match action_log_config.output {
@@ -226,7 +226,7 @@ async fn update_action_log_message(
     };
 
     let text = format!(
-        "<b>Лог событий опроса</b>\n{}\n\n{}\n\n{}\n\n{}",
+        "<b>Лог событий голосования</b>\n{}\n\n{}\n\n{}\n\n{}",
         poll_posting_rule.name(),
         output_description,
         action_log.text,
