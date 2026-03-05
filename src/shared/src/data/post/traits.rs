@@ -24,6 +24,10 @@ pub trait PostTrait {
         &self.base().posting_rule_id
     }
 
+    fn posting_rule_name(&self) -> &str {
+        &self.base().posting_rule_name
+    }
+
     fn schedule(&self) -> &str {
         &self.base().schedule
     }

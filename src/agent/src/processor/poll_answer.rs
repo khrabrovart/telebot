@@ -5,9 +5,8 @@ use std::collections::HashMap;
 use telebot_shared::{
     aws::DynamoDbClient,
     data::{
-        PollActionLog, PollActionLogRecord, PollActionLogRepository, PollPostingRule,
-        PollPostingRuleActionLogOutput, Post, PostRepository, PostingRule, PostingRuleRepository,
-        PostingRuleTrait,
+        PollActionLog, PollActionLogOutput, PollActionLogRecord, PollActionLogRepository, PollPost,
+        Post, PostRepository, PostTrait,
     },
 };
 use teloxide::types::{PollAnswer, Recipient};
@@ -19,7 +18,6 @@ pub async fn process(
 ) -> Result<(), Error> {
     let poll_action_log_repository = PollActionLogRepository::new(db.client.clone()).await?;
     let post_repository = PostRepository::new(db.client.clone()).await?;
-    let posting_rule_repository = PostingRuleRepository::new(db.client.clone()).await?;
 
     let action_log = poll_action_log_repository
         .get(&poll_answer.poll_id.to_string())
@@ -58,30 +56,6 @@ pub async fn process(
         }
     };
 
-    let posting_rule = posting_rule_repository
-        .get(&action_log.posting_rule_id)
-        .await?;
-
-    let posting_rule = match posting_rule {
-        Some(rule) => rule,
-        None => {
-            return Err(anyhow!(
-                "Posting rule not found for id: {}",
-                action_log.posting_rule_id
-            ));
-        }
-    };
-
-    let poll_posting_rule = match posting_rule {
-        PostingRule::Poll(rule) => rule,
-        _ => {
-            return Err(anyhow!(
-                "Associated posting rule is not a poll for id: {}",
-                action_log.posting_rule_id
-            ));
-        }
-    };
-
     let poll_options = &poll_post.content.options;
 
     let actor_id = poll_answer.voter.user().unwrap().id.0;
@@ -113,14 +87,14 @@ pub async fn process(
 
     poll_action_log_repository.put(&updated_action_log).await?;
 
-    update_action_log_message(&updated_action_log, &poll_posting_rule, bot).await?;
+    update_action_log_message(&updated_action_log, &poll_post, bot).await?;
 
     Ok(())
 }
 
 async fn update_action_log_message(
     action_log: &PollActionLog,
-    poll_posting_rule: &PollPostingRule,
+    poll_post: &PollPost,
     bot: &TelegramBotClient,
 ) -> Result<(), Error> {
     let mut grouped_records: HashMap<u64, Vec<PollActionLogRecord>> = HashMap::new();
@@ -134,13 +108,11 @@ async fn update_action_log_message(
 
     let mut filtered_records: HashMap<u64, Vec<PollActionLogRecord>> = HashMap::new();
 
-    let action_log_config = poll_posting_rule.action_log.as_ref().unwrap();
-
-    match action_log_config.output {
-        PollPostingRuleActionLogOutput::All => {
+    match action_log.output {
+        PollActionLogOutput::All => {
             filtered_records = grouped_records;
         }
-        PollPostingRuleActionLogOutput::OnlyWhenTargetOptionRevoked { target_option_id } => {
+        PollActionLogOutput::OnlyWhenTargetOptionRevoked { target_option_id } => {
             for (actor_id, records) in grouped_records.into_iter() {
                 let mut target_option_timestamp: Option<i64> = None;
                 let mut target_option_revoked: bool = false;
@@ -218,16 +190,16 @@ async fn update_action_log_message(
         records_text = "<i>Здесь будут отображаться действия с данным голосованием</i>".to_string();
     }
 
-    let output_description = match action_log_config.output {
-        PollPostingRuleActionLogOutput::All => "Отображаются все действия".to_string(),
-        PollPostingRuleActionLogOutput::OnlyWhenTargetOptionRevoked {
+    let output_description = match action_log.output {
+        PollActionLogOutput::All => "Отображаются все действия".to_string(),
+        PollActionLogOutput::OnlyWhenTargetOptionRevoked {
             target_option_id: _,
         } => "Отображаются только действия после изменения голоса с целевой опции".to_string(),
     };
 
     let text = format!(
         "<b>Лог событий голосования</b>\n{}\n\n{}\n\n{}\n\n{}",
-        poll_posting_rule.name(),
+        poll_post.posting_rule_name(),
         output_description,
         action_log.text,
         records_text

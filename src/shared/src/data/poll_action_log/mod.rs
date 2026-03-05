@@ -1,5 +1,5 @@
 mod core;
 mod repository;
 
-pub use core::{PollActionLog, PollActionLogRecord};
+pub use core::{PollActionLog, PollActionLogOutput, PollActionLogRecord};
 pub use repository::PollActionLogRepository;
