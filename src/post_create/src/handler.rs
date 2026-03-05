@@ -57,7 +57,7 @@ pub async fn handle(event: LambdaEvent<SchedulerEvent>) -> Result<(), Error> {
 
     let post_repository = PostRepository::new(db.client.clone()).await?;
 
-    post_message(&bot, &posting_rule, post_repository).await?;
+    post_message(&bot, &posting_rule, post_repository, &db).await?;
 
     info!(post_id = %posting_rule.id(), "Posting completed successfully");
 
@@ -76,6 +76,7 @@ async fn post_message(
     bot: &TelegramBotClient,
     posting_rule: &PostingRule,
     post_repository: PostRepository,
+    db: &DynamoDbClient,
 ) -> Result<(), anyhow::Error> {
     let chat_id: Recipient = posting_rule.chat_id().into();
     let topic_id = posting_rule.topic_id();
@@ -151,6 +152,7 @@ async fn post_message(
                         poll_posting_rule,
                         poll_posting_rule_action_log,
                         &question,
+                        db,
                     )
                     .await?;
                 }
@@ -201,8 +203,9 @@ async fn create_poll_action_log(
     poll_posting_rule: &PollPostingRule,
     poll_posting_rule_action_log: &PollPostingRuleActionLog,
     text: &str,
+    db: &DynamoDbClient,
 ) -> Result<(), anyhow::Error> {
-    let poll_action_log_repository = PollActionLogRepository::new().await?;
+    let poll_action_log_repository = PollActionLogRepository::new(db.client.clone()).await?;
 
     let poll_id = message.poll().unwrap().id.clone();
     let message_id = message.id;

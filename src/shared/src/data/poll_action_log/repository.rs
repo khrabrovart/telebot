@@ -9,13 +9,13 @@ pub struct PollActionLogRepository {
 }
 
 impl PollActionLogRepository {
-    pub async fn new() -> Result<Self, Error> {
-        let config = aws_config::load_from_env().await;
-        let client = Client::new(&config);
-
+    pub async fn new(dynamodb_client: Client) -> Result<Self, Error> {
         let table_name = env::get_env_var("POLL_ACTION_LOG_TABLE")?;
 
-        Ok(Self { client, table_name })
+        Ok(Self {
+            client: dynamodb_client,
+            table_name,
+        })
     }
 
     pub async fn get(&self, id: &str) -> Result<Option<PollActionLog>, Error> {

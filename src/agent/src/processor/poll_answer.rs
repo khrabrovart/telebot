@@ -1,44 +1,73 @@
 use crate::TelegramBotClient;
-use anyhow::Error;
+use anyhow::{anyhow, Error};
 use chrono_tz::Tz;
 use std::collections::HashMap;
 use telebot_shared::{
     aws::DynamoDbClient,
     data::{
         PollActionLog, PollActionLogRecord, PollActionLogRepository, PollPostingRule,
-        PollPostingRuleActionLogOutput, PostingRule, PostingRuleRepository, PostingRuleTrait,
+        PollPostingRuleActionLogOutput, Post, PostRepository, PostingRule, PostingRuleRepository,
+        PostingRuleTrait,
     },
 };
-use teloxide::types::{MessageId, PollAnswer, Recipient};
+use teloxide::types::{PollAnswer, Recipient};
 
 pub async fn process(
     poll_answer: &PollAnswer,
     bot: &TelegramBotClient,
     db: &DynamoDbClient,
 ) -> Result<(), Error> {
-    let poll_action_log_repository = PollActionLogRepository::new().await?;
+    let poll_action_log_repository = PollActionLogRepository::new(db.client.clone()).await?;
+    let post_repository = PostRepository::new(db.client.clone()).await?;
+    let posting_rule_repository = PostingRuleRepository::new(db.client.clone()).await?;
 
-    let poll_action_log = poll_action_log_repository
+    let action_log = poll_action_log_repository
         .get(&poll_answer.poll_id.to_string())
         .await?;
 
-    let poll_action_log = match poll_action_log {
+    let action_log = match action_log {
         Some(log) => log,
-        None => return Ok(()),
+        None => {
+            return Ok(());
+        }
     };
 
-    let posting_rule_repository = PostingRuleRepository::new(db.client.clone()).await?;
+    let post = post_repository
+        .get(action_log.chat_id, action_log.message_id)
+        .await?;
+
+    let post = match post {
+        Some(post) => post,
+        None => {
+            return Err(anyhow!(
+                "Post not found, chat_id: {}, message_id: {}",
+                action_log.chat_id,
+                action_log.message_id
+            ));
+        }
+    };
+
+    let poll_post = match post {
+        Post::Poll(poll_post) => poll_post,
+        _ => {
+            return Err(anyhow!(
+                "Associated post is not a poll, chat_id: {}, message_id: {}",
+                action_log.chat_id,
+                action_log.message_id
+            ));
+        }
+    };
 
     let posting_rule = posting_rule_repository
-        .get(&poll_action_log.posting_rule_id)
+        .get(&action_log.posting_rule_id)
         .await?;
 
     let posting_rule = match posting_rule {
         Some(rule) => rule,
         None => {
-            return Err(anyhow::anyhow!(
+            return Err(anyhow!(
                 "Posting rule not found for id: {}",
-                poll_action_log.posting_rule_id
+                action_log.posting_rule_id
             ));
         }
     };
@@ -46,14 +75,14 @@ pub async fn process(
     let poll_posting_rule = match posting_rule {
         PostingRule::Poll(rule) => rule,
         _ => {
-            return Err(anyhow::anyhow!(
+            return Err(anyhow!(
                 "Associated posting rule is not a poll for id: {}",
-                poll_action_log.posting_rule_id
+                action_log.posting_rule_id
             ));
         }
     };
 
-    let poll_options = &poll_posting_rule.content.options;
+    let poll_options = &poll_post.content.options;
 
     let actor_id = poll_answer.voter.user().unwrap().id.0;
     let actor_first_name = poll_answer.voter.user().unwrap().first_name.clone();
@@ -79,35 +108,24 @@ pub async fn process(
         timestamp,
     };
 
-    let mut updated_poll_action_log = poll_action_log.clone();
-    updated_poll_action_log.records.push(action_record);
+    let mut updated_action_log = action_log.clone();
+    updated_action_log.records.push(action_record);
 
-    poll_action_log_repository
-        .put(&updated_poll_action_log)
-        .await?;
+    poll_action_log_repository.put(&updated_action_log).await?;
 
-    update_poll_action_log_message(&updated_poll_action_log, &poll_posting_rule, bot).await?;
+    update_action_log_message(&updated_action_log, &poll_posting_rule, bot).await?;
 
     Ok(())
 }
 
-async fn update_poll_action_log_message(
-    poll_action_log: &PollActionLog,
+async fn update_action_log_message(
+    action_log: &PollActionLog,
     poll_posting_rule: &PollPostingRule,
     bot: &TelegramBotClient,
 ) -> Result<(), Error> {
-    let chat_id: Recipient = poll_posting_rule
-        .action_log
-        .as_ref()
-        .unwrap()
-        .chat_id()
-        .into();
-
-    let message_id: MessageId = MessageId(poll_action_log.action_log_message_id);
-
     let mut grouped_records: HashMap<u64, Vec<PollActionLogRecord>> = HashMap::new();
 
-    for record in poll_action_log.records.iter() {
+    for record in action_log.records.iter() {
         grouped_records
             .entry(record.actor_id)
             .or_default()
@@ -116,9 +134,9 @@ async fn update_poll_action_log_message(
 
     let mut filtered_records: HashMap<u64, Vec<PollActionLogRecord>> = HashMap::new();
 
-    let poll_action_log_config = poll_posting_rule.action_log.as_ref().unwrap();
+    let action_log_config = poll_posting_rule.action_log.as_ref().unwrap();
 
-    match poll_action_log_config.output {
+    match action_log_config.output {
         PollPostingRuleActionLogOutput::All => {
             filtered_records = grouped_records;
         }
@@ -173,7 +191,7 @@ async fn update_poll_action_log_message(
             let actions_list = records
                 .iter()
                 .map(|record| {
-                    let tz: Tz = poll_action_log.timezone.parse().unwrap();
+                    let tz: Tz = action_log.timezone.parse().unwrap();
                     let date = chrono::DateTime::from_timestamp(record.timestamp, 0)
                         .unwrap()
                         .with_timezone(&tz)
@@ -200,7 +218,7 @@ async fn update_poll_action_log_message(
         records_text = "<i>Здесь будут отображаться действия с данным опросом</i>".to_string();
     }
 
-    let output_description = match poll_action_log_config.output {
+    let output_description = match action_log_config.output {
         PollPostingRuleActionLogOutput::All => "Отображаются все действия".to_string(),
         PollPostingRuleActionLogOutput::OnlyWhenTargetOptionRevoked {
             target_option_id: _,
@@ -211,9 +229,12 @@ async fn update_poll_action_log_message(
         "<b>Лог событий опроса</b>\n{}\n\n{}\n\n{}\n\n{}",
         poll_posting_rule.name(),
         output_description,
-        poll_action_log.text,
+        action_log.text,
         records_text
     );
+
+    let chat_id: Recipient = action_log.action_log_chat_id().into();
+    let message_id = action_log.action_log_message_id();
 
     match bot.edit_message_text(chat_id, message_id, &text).await {
         Ok(_) => Ok(()),
