@@ -6,7 +6,7 @@ use telebot_shared::{
     aws::DynamoDbClient,
     data::{
         PollActionLog, PollActionLogRecord, PollActionLogRepository, PollPostingRule,
-        PollPostingRuleActionLogOutput, PostingRule, PostingRuleRepository,
+        PollPostingRuleActionLogOutput, PostingRule, PostingRuleRepository, PostingRuleTrait,
     },
 };
 use teloxide::types::{MessageId, PollAnswer, Recipient};
@@ -208,8 +208,11 @@ async fn update_poll_action_log_message(
     };
 
     let text = format!(
-        "<b>Лог событий опроса</b>\n{}\n\n{}\n\n{}",
-        output_description, poll_action_log.text, records_text
+        "<b>Лог событий опроса</b>\n{}\n\n{}\n\n{}\n\n{}",
+        poll_posting_rule.name(),
+        output_description,
+        poll_action_log.text,
+        records_text
     );
 
     match bot.edit_message_text(chat_id, message_id, &text).await {

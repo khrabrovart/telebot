@@ -5,7 +5,7 @@ use crate::{
 use serde::{Deserialize, Serialize};
 use teloxide::types::{MessageId, PollId};
 
-// TODO: Remove unnecessary fields that exist in the Post and use the Post as the source of truth for the post data instead of duplicating it in the PollActionLog
+// TODO: Remove unnecessary fields that exist in the Action Log and use the Post as the source of truth for the post data instead of duplicating it in the PollActionLog
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
