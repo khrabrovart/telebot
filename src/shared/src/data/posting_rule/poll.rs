@@ -2,8 +2,6 @@ use crate::data::{posting_rule::BasePostingRule, PostingRuleTrait};
 use serde::{Deserialize, Serialize};
 use teloxide::types::{ChatId, MessageId};
 
-// TODO: Rename poll_action_log to action_log
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct PollPostingRule {
@@ -11,7 +9,7 @@ pub struct PollPostingRule {
     base: BasePostingRule,
     pub content: PollPostingRuleContent,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub poll_action_log: Option<PollPostingRuleActionLog>,
+    pub action_log: Option<PollPostingRuleActionLog>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

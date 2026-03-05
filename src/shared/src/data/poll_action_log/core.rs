@@ -53,7 +53,7 @@ impl PollActionLog {
         action_log_message_id: MessageId,
         text: String,
     ) -> Self {
-        let ttl_hours = match &poll_posting_rule.poll_action_log {
+        let ttl_hours = match &poll_posting_rule.action_log {
             Some(action_log) => action_log.ttl_hours,
             None => None,
         };

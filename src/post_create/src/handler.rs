@@ -130,7 +130,7 @@ async fn post_message(
 
             info!("Post saved successfully, checking if poll action log is enabled");
 
-            match &poll_posting_rule.poll_action_log {
+            match &poll_posting_rule.action_log {
                 Some(poll_posting_rule_action_log) => {
                     info!(
                         "Poll action log enabled for posting rule {}, messages will be sent to chat {}",
@@ -176,7 +176,7 @@ async fn post_poll_action_log_message(
     let chat_id: Recipient = action_log.chat_id().into();
     let topic_id = action_log.topic_id();
 
-    let output_description = match poll_posting_rule.poll_action_log.as_ref().unwrap().output {
+    let output_description = match poll_posting_rule.action_log.as_ref().unwrap().output {
         PollPostingRuleActionLogOutput::All => "Отображаются все действия".to_string(),
         PollPostingRuleActionLogOutput::OnlyWhenTargetOptionRevoked {
             target_option_id: _,

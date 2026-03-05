@@ -97,7 +97,7 @@ async fn update_poll_action_log_message(
     bot: &TelegramBotClient,
 ) -> Result<(), Error> {
     let chat_id: Recipient = poll_posting_rule
-        .poll_action_log
+        .action_log
         .as_ref()
         .unwrap()
         .chat_id()
@@ -116,7 +116,7 @@ async fn update_poll_action_log_message(
 
     let mut filtered_records: HashMap<u64, Vec<PollActionLogRecord>> = HashMap::new();
 
-    let poll_action_log_config = poll_posting_rule.poll_action_log.as_ref().unwrap();
+    let poll_action_log_config = poll_posting_rule.action_log.as_ref().unwrap();
 
     match poll_action_log_config.output {
         PollPostingRuleActionLogOutput::All => {
