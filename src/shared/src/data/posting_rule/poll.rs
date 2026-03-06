@@ -38,7 +38,7 @@ pub struct PollOptionIntersectionSource {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "Type", rename_all = "PascalCase")]
+#[serde(rename_all = "PascalCase")]
 pub enum PollOptionIntersectionSourcePostSelector {
     MostRecent,
 }
