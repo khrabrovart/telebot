@@ -20,7 +20,6 @@ pub struct PollActionLog {
     pub action_log_topic_id: Option<i32>,
     pub action_log_message_id: i32,
     pub output: PollActionLogOutput,
-    pub text: String,
     pub records: Vec<PollActionLogRecord>,
     pub timezone: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -61,7 +60,6 @@ impl PollActionLog {
         poll_id: PollId,
         message_id: MessageId,
         action_log_message_id: MessageId,
-        text: String,
     ) -> Self {
         let ttl_hours = match &poll_posting_rule.action_log {
             Some(action_log) => action_log.ttl_hours,
@@ -90,7 +88,6 @@ impl PollActionLog {
                 .map(|topic_id| topic_id.0),
             action_log_message_id: action_log_message_id.0,
             output,
-            text,
             records: vec![],
             timezone: poll_posting_rule.timezone().to_string(),
             expires_at,

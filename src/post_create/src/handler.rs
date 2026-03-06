@@ -151,7 +151,6 @@ async fn post_message(
                         poll_action_log_message,
                         poll_posting_rule,
                         poll_posting_rule_action_log,
-                        &question,
                         db,
                     )
                     .await?;
@@ -202,7 +201,6 @@ async fn create_poll_action_log(
     poll_action_log_message: Message,
     poll_posting_rule: &PollPostingRule,
     poll_posting_rule_action_log: &PollPostingRuleActionLog,
-    text: &str,
     db: &DynamoDbClient,
 ) -> Result<(), anyhow::Error> {
     let poll_action_log_repository = PollActionLogRepository::new(db.client.clone()).await?;
@@ -217,7 +215,6 @@ async fn create_poll_action_log(
         poll_id,
         message_id,
         poll_action_log_message_id,
-        text.to_string(),
     );
 
     poll_action_log_repository.put(&poll_action_log).await?;
