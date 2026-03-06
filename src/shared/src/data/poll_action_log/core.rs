@@ -30,7 +30,8 @@ pub struct PollActionLog {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct PollActionLogRecord {
-    pub update_id: UpdateId,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub update_id: Option<UpdateId>,
     pub actor_id: u64,
     pub actor_first_name: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -131,7 +132,7 @@ impl PollActionLogRecord {
         let timestamp = chrono::Utc::now().timestamp();
 
         PollActionLogRecord {
-            update_id,
+            update_id: Some(update_id),
             actor_id: user.id.0,
             actor_first_name: user.first_name.clone(),
             actor_last_name: user.last_name.clone(),
