@@ -67,6 +67,8 @@ pub async fn process(
         (None, None)
     };
 
+    // TODO: Check if the record with the same update_id elready exists and omit adding a new one in this case, to prevent duplicates when receiving the same update multiple times due to network issues or other reasons
+
     let action_record = PollActionLogRecord::new(
         update.id,
         poll_answer.voter.user().unwrap(),

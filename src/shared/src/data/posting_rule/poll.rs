@@ -16,7 +16,41 @@ pub struct PollPostingRule {
 #[serde(rename_all = "PascalCase")]
 pub struct PollPostingRuleContent {
     pub question: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub source: Option<PollOptionSource>,
     pub options: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "Type", rename_all = "PascalCase")]
+pub enum PollOptionSource {
+    Intersection(PollOptionIntersectionSource),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct PollOptionIntersectionSource {
+    pub source_posting_rule_id: String,
+    pub source_post_selector: PollOptionIntersectionSourcePostSelector,
+    pub target_option_id: i32,
+    pub voter_ids: Vec<Vec<u64>>,
+    pub no_results_behavior: PollOptionSourceNoResultsBehavior,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "Type", rename_all = "PascalCase")]
+pub enum PollOptionIntersectionSourcePostSelector {
+    MostRecent,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "Type", rename_all = "PascalCase")]
+pub enum PollOptionSourceNoResultsBehavior {
+    SkipPosting,
+    FallbackToPostingRule {
+        #[serde(rename = "PostingRuleId")]
+        posting_rule_id: String,
+    },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
