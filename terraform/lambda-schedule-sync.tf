@@ -1,20 +1,20 @@
-data "archive_file" "scheduling_lambda_zip" {
+data "archive_file" "schedule_sync_lambda_zip" {
   type        = "zip"
-  source_file = "../scheduling-lambda/bootstrap"
-  output_path = "scheduling_lambda.zip"
+  source_file = "../schedule-sync-lambda/bootstrap"
+  output_path = "schedule_sync_lambda.zip"
 }
 
-resource "aws_lambda_function" "scheduling_lambda" {
-  filename      = data.archive_file.scheduling_lambda_zip.output_path
-  function_name = "${local.app_name}-scheduling"
-  role          = aws_iam_role.scheduling_lambda_role.arn
+resource "aws_lambda_function" "schedule_sync_lambda" {
+  filename      = data.archive_file.schedule_sync_lambda_zip.output_path
+  function_name = "${local.app_name}-schedule-sync"
+  role          = aws_iam_role.schedule_sync_lambda_role.arn
   handler       = "bootstrap"
   runtime       = "provided.al2023"
   timeout       = 30
   memory_size   = 128
   architectures = ["arm64"]
 
-  source_code_hash = data.archive_file.scheduling_lambda_zip.output_base64sha256
+  source_code_hash = data.archive_file.schedule_sync_lambda_zip.output_base64sha256
 
   environment {
     variables = {
@@ -26,13 +26,13 @@ resource "aws_lambda_function" "scheduling_lambda" {
   }
 
   depends_on = [
-    aws_iam_role_policy_attachment.scheduling_lambda_basic_execution,
-    aws_cloudwatch_log_group.scheduling_lambda_logs
+    aws_iam_role_policy_attachment.schedule_sync_lambda_basic_execution,
+    aws_cloudwatch_log_group.schedule_sync_lambda_logs
   ]
 }
 
-resource "aws_iam_role" "scheduling_lambda_role" {
-  name = "${local.app_name}-scheduling-lambda-role"
+resource "aws_iam_role" "schedule_sync_lambda_role" {
+  name = "${local.app_name}-schedule-sync-lambda-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -48,8 +48,8 @@ resource "aws_iam_role" "scheduling_lambda_role" {
   })
 }
 
-resource "aws_iam_policy" "scheduling_lambda_policy" {
-  name = "${local.app_name}-scheduling-lambda-policy"
+resource "aws_iam_policy" "schedule_sync_lambda_policy" {
+  name = "${local.app_name}-schedule-sync-lambda-policy"
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -91,24 +91,24 @@ resource "aws_iam_policy" "scheduling_lambda_policy" {
   })
 }
 
-resource "aws_iam_role_policy_attachment" "scheduling_lambda_policy_attachment" {
-  role       = aws_iam_role.scheduling_lambda_role.name
-  policy_arn = aws_iam_policy.scheduling_lambda_policy.arn
+resource "aws_iam_role_policy_attachment" "schedule_sync_lambda_policy_attachment" {
+  role       = aws_iam_role.schedule_sync_lambda_role.name
+  policy_arn = aws_iam_policy.schedule_sync_lambda_policy.arn
 }
 
-resource "aws_iam_role_policy_attachment" "scheduling_lambda_basic_execution" {
-  role       = aws_iam_role.scheduling_lambda_role.name
+resource "aws_iam_role_policy_attachment" "schedule_sync_lambda_basic_execution" {
+  role       = aws_iam_role.schedule_sync_lambda_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
-resource "aws_cloudwatch_log_group" "scheduling_lambda_logs" {
-  name              = "/aws/lambda/${local.app_name}-scheduling"
+resource "aws_cloudwatch_log_group" "schedule_sync_lambda_logs" {
+  name              = "/aws/lambda/${local.app_name}-schedule-sync"
   retention_in_days = 14
 }
 
-resource "aws_lambda_event_source_mapping" "scheduling_dynamodb_stream" {
+resource "aws_lambda_event_source_mapping" "schedule_sync_dynamodb_stream" {
   event_source_arn                   = aws_dynamodb_table.posting_rules.stream_arn
-  function_name                      = aws_lambda_function.scheduling_lambda.arn
+  function_name                      = aws_lambda_function.schedule_sync_lambda.arn
   starting_position                  = "LATEST"
   batch_size                         = 1
   maximum_batching_window_in_seconds = 5

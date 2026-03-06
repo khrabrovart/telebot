@@ -22,13 +22,13 @@ Telebot is composed of 5 AWS Lambda functions plus a shared library, orchestrate
 |---|---|---|---|
 | **Agent** | Webhook handler | HTTP API (Telegram updates) | Process messages, callback queries, poll answers; route to handlers; validate bot config |
 | **Post-Create** | Scheduled posting | EventBridge Scheduler (CRON) | Create text posts/polls in channels; perform variable replacement; pin messages |
-| **Scheduling** | Schedule sync | DynamoDB Streams (posting_rules table) | Create/update/delete EventBridge schedules when posting rules change |
+| **Schedule Sync** | Schedule sync | DynamoDB Streams (posting_rules table) | Create/update/delete EventBridge schedules when posting rules change |
 | **Webhook-Sync** | Webhook management | DynamoDB Streams (bots table) | Register bots with Telegram; create/delete API Gateway routes |
 | **Shared** | Common library | N/A | Data types, repositories, AWS utilities shared by all functions |
 
 **Data Flow:**
 1. Admin registers a bot in DynamoDB → Webhook-Sync creates API Gateway route and registers Telegram webhook
-2. Admin creates a PostingRule → Scheduling Lambda creates EventBridge schedule
+2. Admin creates a PostingRule → Schedule Sync Lambda creates EventBridge schedule
 3. At scheduled time, EventBridge invokes Post-Create → sends content to Telegram
 4. User interacts with content → Telegram sends update via webhook to Agent → Agent logs interaction in DynamoDB
 
