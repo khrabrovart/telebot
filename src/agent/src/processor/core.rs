@@ -19,7 +19,7 @@ pub async fn process(
     }
 
     if let UpdateKind::PollAnswer(poll_answer) = &update.kind {
-        poll_answer::process(poll_answer, &bot, db).await?;
+        poll_answer::process(poll_answer, update, &bot, db).await?;
         return Ok(());
     }
 

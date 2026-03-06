@@ -9,10 +9,11 @@ use telebot_shared::{
         Post, PostRepository, PostTrait,
     },
 };
-use teloxide::types::{PollAnswer, Recipient};
+use teloxide::types::{PollAnswer, Recipient, Update};
 
 pub async fn process(
     poll_answer: &PollAnswer,
+    update: &Update,
     bot: &TelegramBotClient,
     db: &DynamoDbClient,
 ) -> Result<(), Error> {
@@ -58,10 +59,6 @@ pub async fn process(
 
     let poll_options = &poll_post.content.options;
 
-    let actor_id = poll_answer.voter.user().unwrap().id.0;
-    let actor_first_name = poll_answer.voter.user().unwrap().first_name.clone();
-    let actor_last_name = poll_answer.voter.user().unwrap().last_name.clone();
-    let actor_username = poll_answer.voter.user().unwrap().username.clone();
     let (option_id, option_text) = if !poll_answer.option_ids.is_empty() {
         let option_id = poll_answer.option_ids[0];
         let option_text = poll_options[option_id as usize].clone();
@@ -70,17 +67,12 @@ pub async fn process(
         (None, None)
     };
 
-    let timestamp = chrono::Utc::now().timestamp();
-
-    let action_record = PollActionLogRecord {
-        actor_id,
-        actor_first_name,
-        actor_last_name,
-        actor_username,
+    let action_record = PollActionLogRecord::new(
+        update.id,
+        poll_answer.voter.user().unwrap(),
         option_id,
         option_text,
-        timestamp,
-    };
+    );
 
     let mut updated_action_log = action_log.clone();
     updated_action_log.records.push(action_record);

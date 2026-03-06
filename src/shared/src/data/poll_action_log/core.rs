@@ -5,7 +5,7 @@ use crate::{
     date,
 };
 use serde::{Deserialize, Serialize};
-use teloxide::types::{ChatId, MessageId, PollId};
+use teloxide::types::{ChatId, MessageId, PollId, UpdateId, User};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
@@ -30,6 +30,7 @@ pub struct PollActionLog {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct PollActionLogRecord {
+    pub update_id: UpdateId,
     pub actor_id: u64,
     pub actor_first_name: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -117,5 +118,27 @@ impl PollActionLog {
 
     pub fn action_log_message_id(&self) -> MessageId {
         MessageId(self.action_log_message_id)
+    }
+}
+
+impl PollActionLogRecord {
+    pub fn new(
+        update_id: UpdateId,
+        user: &User,
+        option_id: Option<i32>,
+        option_text: Option<String>,
+    ) -> Self {
+        let timestamp = chrono::Utc::now().timestamp();
+
+        PollActionLogRecord {
+            update_id,
+            actor_id: user.id.0,
+            actor_first_name: user.first_name.clone(),
+            actor_last_name: user.last_name.clone(),
+            actor_username: user.username.clone(),
+            option_id,
+            option_text,
+            timestamp,
+        }
     }
 }
