@@ -140,11 +140,13 @@ async fn update_action_log_message(
         }
     }
 
-    // TODO: Implement cosistent sorting for log records by date
+    let mut actor_ids: Vec<_> = filtered_records.keys().copied().collect();
+    actor_ids.sort();
 
-    let mut records_text = filtered_records
-        .values()
-        .map(|records| {
+    let mut records_text = actor_ids
+        .iter()
+        .map(|actor_id| {
+            let records = &filtered_records[actor_id];
             let last_name = records[0]
                 .actor_last_name
                 .clone()
