@@ -7,8 +7,6 @@ use crate::{
 use serde::{Deserialize, Serialize};
 use teloxide::types::{ChatId, MessageId, PollId};
 
-// TODO: Remove unnecessary fields that exist in the Action Log and use the Post as the source of truth for the post data instead of duplicating it in the PollActionLog
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct PollActionLog {
@@ -22,7 +20,6 @@ pub struct PollActionLog {
     pub action_log_topic_id: Option<i32>,
     pub action_log_message_id: i32,
     pub output: PollActionLogOutput,
-    pub posting_rule_id: String,
     pub text: String,
     pub records: Vec<PollActionLogRecord>,
     pub timezone: String,
@@ -93,7 +90,6 @@ impl PollActionLog {
                 .map(|topic_id| topic_id.0),
             action_log_message_id: action_log_message_id.0,
             output,
-            posting_rule_id: poll_posting_rule.id().to_string(),
             text,
             records: vec![],
             timezone: poll_posting_rule.timezone().to_string(),
