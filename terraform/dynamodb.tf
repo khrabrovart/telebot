@@ -24,9 +24,26 @@ resource "aws_dynamodb_table" "poll_action_log" {
     type = "S"
   }
 
+  attribute {
+    name = "ChatId"
+    type = "N"
+  }
+
+  attribute {
+    name = "MessageId"
+    type = "N"
+  }
+
   ttl {
     attribute_name = "ExpiresAt"
     enabled        = true
+  }
+
+  global_secondary_index {
+    name            = "ChatMessageIndex"
+    hash_key        = "ChatId"
+    range_key       = "MessageId"
+    projection_type = "ALL"
   }
 }
 
@@ -61,8 +78,25 @@ resource "aws_dynamodb_table" "posts" {
     type = "N"
   }
 
+  attribute {
+    name = "PostingRuleId"
+    type = "S"
+  }
+
+  attribute {
+    name = "Timestamp"
+    type = "N"
+  }
+
   ttl {
     attribute_name = "ExpiresAt"
     enabled        = true
+  }
+
+  global_secondary_index {
+    name            = "PostingRuleIndex"
+    hash_key        = "PostingRuleId"
+    range_key       = "Timestamp"
+    projection_type = "ALL"
   }
 }
