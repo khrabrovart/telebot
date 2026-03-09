@@ -21,7 +21,7 @@ pub async fn process(
     let post_repository = PostRepository::new(db.client.clone()).await?;
 
     let action_log = poll_action_log_repository
-        .get(&poll_answer.poll_id.to_string())
+        .get_by_poll_id(&poll_answer.poll_id.to_string())
         .await?;
 
     let action_log = match action_log {
@@ -32,7 +32,7 @@ pub async fn process(
     };
 
     let post = post_repository
-        .get(action_log.chat_id, action_log.message_id)
+        .get_by_chat_and_message(action_log.chat_id, action_log.message_id)
         .await?;
 
     let post = match post {

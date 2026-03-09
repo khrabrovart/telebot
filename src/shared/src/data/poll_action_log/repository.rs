@@ -18,7 +18,7 @@ impl PollActionLogRepository {
         })
     }
 
-    pub async fn get(&self, id: &str) -> Result<Option<PollActionLog>, Error> {
+    pub async fn get_by_poll_id(&self, id: &str) -> Result<Option<PollActionLog>, Error> {
         let result = self
             .client
             .get_item()
@@ -31,6 +31,32 @@ impl PollActionLogRepository {
         match result.item {
             Some(item) => Ok(serde_dynamo::from_item(item)?),
             None => Ok(None),
+        }
+    }
+
+    pub async fn get_by_chat_and_message(
+        &self,
+        chat_id: i64,
+        message_id: i32,
+    ) -> Result<Option<PollActionLog>, Error> {
+        let result = self
+            .client
+            .query()
+            .table_name(&self.table_name)
+            .index_name("ChatMessageIndex")
+            .key_condition_expression("ChatId = :chat_id AND MessageId = :message_id")
+            .expression_attribute_values(":chat_id", AttributeValue::N(chat_id.to_string()))
+            .expression_attribute_values(":message_id", AttributeValue::N(message_id.to_string()))
+            .limit(1)
+            .send()
+            .await
+            .map_err(errors::map_aws_error)?;
+
+        match result.items {
+            Some(items) if !items.is_empty() => Ok(Some(serde_dynamo::from_item(
+                items.into_iter().next().unwrap(),
+            )?)),
+            _ => Ok(None),
         }
     }
 

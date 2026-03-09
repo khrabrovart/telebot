@@ -18,7 +18,11 @@ impl PostRepository {
         })
     }
 
-    pub async fn get(&self, chat_id: i64, message_id: i32) -> Result<Option<Post>, Error> {
+    pub async fn get_by_chat_and_message(
+        &self,
+        chat_id: i64,
+        message_id: i32,
+    ) -> Result<Option<Post>, Error> {
         let result = self
             .client
             .get_item()
@@ -32,6 +36,31 @@ impl PostRepository {
         match result.item {
             Some(item) => Ok(serde_dynamo::from_item(item)?),
             None => Ok(None),
+        }
+    }
+
+    pub async fn get_most_recent_by_posting_rule(
+        &self,
+        posting_rule_id: &str,
+    ) -> Result<Option<Post>, Error> {
+        let result = self
+            .client
+            .query()
+            .table_name(&self.table_name)
+            .index_name("PostingRuleIndex")
+            .key_condition_expression("PostingRuleId = :rule_id")
+            .expression_attribute_values(":rule_id", AttributeValue::S(posting_rule_id.to_string()))
+            .scan_index_forward(false)
+            .limit(1)
+            .send()
+            .await
+            .map_err(errors::map_aws_error)?;
+
+        match result.items {
+            Some(items) if !items.is_empty() => Ok(Some(serde_dynamo::from_item(
+                items.into_iter().next().unwrap(),
+            )?)),
+            _ => Ok(None),
         }
     }
 
