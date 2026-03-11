@@ -118,20 +118,25 @@ async fn post_message(
 
             let mut options: Vec<String> = vec![];
 
-            if let Some(source) = &poll_posting_rule.content.source {
-                let sourced_options =
-                    get_sourced_poll_options(source, post_repository, poll_action_log_repository)
-                        .await?;
+            if let Some(sources) = &poll_posting_rule.content.sources {
+                for source in sources {
+                    let sourced_options = get_sourced_poll_options(
+                        source,
+                        post_repository,
+                        poll_action_log_repository,
+                    )
+                    .await?;
 
-                if sourced_options.is_empty() {
-                    warn!(
-                        posting_rule_id = %poll_posting_rule.id(),
-                        "No options found from source, poll will not be posted"
-                    );
-                    return Ok(());
+                    if sourced_options.is_empty() {
+                        warn!(
+                            posting_rule_id = %poll_posting_rule.id(),
+                            "No options found from source, poll will not be posted"
+                        );
+                        return Ok(());
+                    }
+
+                    options.extend(sourced_options);
                 }
-
-                options.extend(sourced_options.iter().map(|s| s.to_string()));
             }
 
             options.extend(

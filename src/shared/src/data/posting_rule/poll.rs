@@ -17,7 +17,7 @@ pub struct PollPostingRule {
 pub struct PollPostingRuleContent {
     pub question: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub source: Option<PollPostingRuleOptionSource>,
+    pub sources: Option<Vec<PollPostingRuleOptionSource>>,
     pub options: Vec<String>,
 }
 
