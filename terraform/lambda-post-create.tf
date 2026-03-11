@@ -67,8 +67,10 @@ resource "aws_iam_policy" "post_create_lambda_policy" {
         Resource = [
           aws_dynamodb_table.bots.arn,
           aws_dynamodb_table.poll_action_log.arn,
+          "${aws_dynamodb_table.poll_action_log.arn}/index/ChatMessageIndex",
           aws_dynamodb_table.posting_rules.arn,
-          aws_dynamodb_table.posts.arn
+          aws_dynamodb_table.posts.arn,
+          "${aws_dynamodb_table.posts.arn}/index/PostingRuleIndex"
         ]
       },
     ]
