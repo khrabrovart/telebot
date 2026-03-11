@@ -1,5 +1,5 @@
-use crate::TelegramBotClient;
 use crate::REPLACEMENTS;
+use crate::TelegramBotClient;
 use lambda_runtime::{Error, LambdaEvent};
 use std::collections::HashMap;
 use telebot_shared::{
@@ -167,7 +167,8 @@ async fn post_message(
                 Some(poll_posting_rule_action_log) => {
                     info!(
                         "Poll action log enabled for posting rule {}, messages will be sent to chat {}",
-                        poll_posting_rule.id(), poll_posting_rule_action_log.chat_id()
+                        poll_posting_rule.id(),
+                        poll_posting_rule_action_log.chat_id()
                     );
 
                     let poll_action_log_message = post_poll_action_log_message(
@@ -297,6 +298,13 @@ async fn get_intersection_sourced_poll_options(
         }
     };
 
+    info!(
+        posting_rule_id = %source.source_posting_rule_id,
+        chat_id = recent_post.base.chat_id,
+        message_id = recent_post.base.message_id,
+        "Recent poll post found for source posting rule"
+    );
+
     let action_log = match poll_action_log_repository
         .get_by_chat_and_message(recent_post.base.chat_id, recent_post.base.message_id)
         .await?
@@ -312,24 +320,34 @@ async fn get_intersection_sourced_poll_options(
         }
     };
 
-    let mut latest_records: HashMap<u64, PollActionLogRecord> = HashMap::new();
+    info!(
+        poll_id = action_log.id,
+        chat_id = action_log.chat_id,
+        message_id = action_log.message_id,
+        record_count = action_log.records.len(),
+        "Action log found for poll post"
+    );
 
-    for record in &action_log.records {
-        if record.option_id == Some(source.target_option_id) {
-            latest_records
+    // Find the latest record per actor that voted for the target option
+    let target_option_voters: HashMap<u64, PollActionLogRecord> = action_log
+        .records
+        .iter()
+        .fold(HashMap::new(), |mut latest_by_actor, record| {
+            latest_by_actor
                 .entry(record.actor_id)
-                .and_modify(|existing| {
+                .and_modify(|existing: &mut PollActionLogRecord| {
                     if record.timestamp > existing.timestamp {
                         *existing = record.clone();
                     }
                 })
                 .or_insert_with(|| record.clone());
-        }
-    }
+            latest_by_actor
+        })
+        .into_iter()
+        .filter(|(_, record)| record.option_id == Some(source.target_option_id))
+        .collect();
 
-    let actor_ids: Vec<u64> = latest_records.keys().copied().collect();
-
-    if actor_ids.is_empty() {
+    if target_option_voters.is_empty() {
         info!(
             target_option_id = source.target_option_id,
             "No actors found voting for target option"
@@ -337,54 +355,30 @@ async fn get_intersection_sourced_poll_options(
         return Ok(Vec::new());
     }
 
-    let matching_actors = source.voter_ids.iter().find_map(|voter_group| {
-        let intersection: Vec<u64> = actor_ids
-            .iter()
-            .filter(|id| voter_group.contains(id))
-            .copied()
-            .collect();
+    let matching_voters: Vec<String> = source
+        .voter_ids
+        .iter()
+        .filter_map(|voter_ids_group| {
+            voter_ids_group
+                .iter()
+                .find_map(|voter_id| target_option_voters.get(voter_id))
+                .map(|record| {
+                    let last_name = record
+                        .actor_last_name
+                        .as_ref()
+                        .map(|ln| format!(" {}", ln))
+                        .unwrap_or_default();
 
-        if !intersection.is_empty() {
-            Some(intersection)
-        } else {
-            None
-        }
-    });
-
-    let matching_actors = match matching_actors {
-        Some(actors) => actors,
-        None => {
-            info!(
-                target_option_id = source.target_option_id,
-                "No actors found in voter groups"
-            );
-            return Ok(Vec::new());
-        }
-    };
-
-    let result: Vec<String> = matching_actors
-        .into_iter()
-        .filter_map(|actor_id| {
-            latest_records.get(&actor_id).map(|record| {
-                let last_name = record
-                    .actor_last_name
-                    .as_deref()
-                    .map_or("".to_string(), |last_name| format!(" {}", last_name));
-
-                if last_name.is_empty() {
-                    record.actor_first_name.clone()
-                } else {
                     format!("{}{}", record.actor_first_name, last_name)
-                }
-            })
+                })
         })
         .collect();
 
     info!(
         target_option_id = source.target_option_id,
-        matched_count = result.len(),
-        "Found matched actor names for intersection"
+        matched_count = matching_voters.len(),
+        "Found matched voters for intersection"
     );
 
-    Ok(result)
+    Ok(matching_voters)
 }
