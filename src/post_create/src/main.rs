@@ -1,4 +1,4 @@
-use lambda_runtime::{run, service_fn, Error};
+use lambda_runtime::{Error, run, service_fn};
 use post_create_lambda::handler;
 
 #[tokio::main]
