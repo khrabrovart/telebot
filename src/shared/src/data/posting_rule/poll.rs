@@ -17,35 +17,35 @@ pub struct PollPostingRule {
 pub struct PollPostingRuleContent {
     pub question: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub source: Option<PollOptionSource>,
+    pub source: Option<PollPostingRuleOptionSource>,
     pub options: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "Type", rename_all = "PascalCase")]
-pub enum PollOptionSource {
-    Intersection(PollOptionIntersectionSource),
+pub enum PollPostingRuleOptionSource {
+    Intersection(PollPostingRuleOptionIntersectionSource),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-pub struct PollOptionIntersectionSource {
+pub struct PollPostingRuleOptionIntersectionSource {
     pub source_posting_rule_id: String,
-    pub source_post_selector: PollOptionIntersectionSourcePostSelector,
+    pub source_post_selector: PollPostingRuleOptionIntersectionSourcePostSelector,
     pub target_option_id: i32,
     pub voter_ids: Vec<Vec<u64>>,
-    pub no_results_behavior: PollOptionSourceNoResultsBehavior,
+    pub no_results_behavior: PollPostingRuleOptionSourceNoResultsBehavior,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-pub enum PollOptionIntersectionSourcePostSelector {
+pub enum PollPostingRuleOptionIntersectionSourcePostSelector {
     MostRecent,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "Type", rename_all = "PascalCase")]
-pub enum PollOptionSourceNoResultsBehavior {
+pub enum PollPostingRuleOptionSourceNoResultsBehavior {
     SkipPosting,
     FallbackToPostingRule {
         #[serde(rename = "PostingRuleId")]

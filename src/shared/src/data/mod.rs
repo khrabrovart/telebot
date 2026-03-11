@@ -11,6 +11,8 @@ pub use poll_action_log::{
 pub use post::{PollPost, Post, PostRepository, PostTrait, TextPost};
 pub use posting_rule::{
     BasePostingRule, PollPostingRule, PollPostingRuleActionLog, PollPostingRuleActionLogOutput,
-    PostingRule, PostingRuleRepository, PostingRuleTrait, TextPostingRule,
+    PollPostingRuleOptionIntersectionSource, PollPostingRuleOptionIntersectionSourcePostSelector,
+    PollPostingRuleOptionSource, PollPostingRuleOptionSourceNoResultsBehavior, PostingRule,
+    PostingRuleRepository, PostingRuleTrait, TextPostingRule,
 };
 pub use scheduler_event::SchedulerEvent;
