@@ -438,15 +438,7 @@ async fn get_intersection_sourced_poll_options(
             voter_ids_group
                 .iter()
                 .find_map(|voter_id| target_option_voters.get(voter_id))
-                .map(|record| {
-                    let last_name = record
-                        .actor_last_name
-                        .as_ref()
-                        .map(|ln| format!(" {}", ln))
-                        .unwrap_or_default();
-
-                    format!("{}{}", record.actor_first_name, last_name)
-                })
+                .map(|record| record.actor_first_name.clone())
         })
         .collect();
 

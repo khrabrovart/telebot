@@ -18,7 +18,7 @@ resource "aws_lambda_function" "webhook_sync_lambda" {
 
   environment {
     variables = {
-      API_ID             = aws_apigatewayv2_api.webhook_api.id
+      API_ID             = aws_apigatewayv2_api.common_api.id
       API_INTEGRATION_ID = aws_apigatewayv2_integration.webhook_lambda_integration.id
       ROUTE_PREFIX       = "/webhook/"
     }
@@ -73,8 +73,8 @@ resource "aws_iam_policy" "webhook_sync_lambda_policy" {
           "apigateway:DELETE"
         ]
         Resource = [
-          "arn:aws:apigateway:${data.aws_region.current.name}::/apis/${aws_apigatewayv2_api.webhook_api.id}",
-          "arn:aws:apigateway:${data.aws_region.current.name}::/apis/${aws_apigatewayv2_api.webhook_api.id}/*"
+          "arn:aws:apigateway:${data.aws_region.current.name}::/apis/${aws_apigatewayv2_api.common_api.id}",
+          "arn:aws:apigateway:${data.aws_region.current.name}::/apis/${aws_apigatewayv2_api.common_api.id}/*"
         ]
       }
     ]
