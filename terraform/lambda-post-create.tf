@@ -73,6 +73,15 @@ resource "aws_iam_policy" "post_create_lambda_policy" {
           "${aws_dynamodb_table.posts.arn}/index/PostingRuleIndex"
         ]
       },
+      {
+        Effect = "Allow"
+        Action = [
+          "lambda:InvokeFunction"
+        ]
+        Resource = [
+          aws_lambda_function.post_create_lambda.arn
+        ]
+      },
     ]
   })
 }

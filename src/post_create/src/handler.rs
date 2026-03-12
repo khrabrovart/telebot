@@ -1,7 +1,11 @@
 use crate::REPLACEMENTS;
 use crate::TelegramBotClient;
+use aws_sdk_lambda::Client as LambdaClient;
+use aws_sdk_lambda::primitives::Blob;
+use aws_sdk_lambda::types::InvocationType;
 use lambda_runtime::{Error, LambdaEvent};
 use std::collections::HashMap;
+use telebot_shared::data::PollPostingRuleOptionSourcesNoResultsBehavior;
 use telebot_shared::{
     aws::DynamoDbClient,
     data::{
@@ -17,7 +21,7 @@ use tracing::{error, info, warn};
 // TODO: Split this handler into multiple smaller functions and move them into separate modules for better readability and maintainability
 
 pub async fn handle(event: LambdaEvent<SchedulerEvent>) -> Result<(), Error> {
-    let (payload, _context) = event.into_parts();
+    let (payload, context) = event.into_parts();
 
     info!(posting_rule_id = %payload.posting_rule_id, "Received event");
 
@@ -65,6 +69,7 @@ pub async fn handle(event: LambdaEvent<SchedulerEvent>) -> Result<(), Error> {
         &post_repository,
         &poll_action_log_repository,
         &db,
+        &context.invoked_function_arn,
     )
     .await?;
 
@@ -87,6 +92,7 @@ async fn post_message(
     post_repository: &PostRepository,
     poll_action_log_repository: &PollActionLogRepository,
     db: &DynamoDbClient,
+    function_arn: &str,
 ) -> Result<(), anyhow::Error> {
     let chat_id: Recipient = posting_rule.chat_id().into();
     let topic_id = posting_rule.topic_id();
@@ -118,25 +124,47 @@ async fn post_message(
 
             let mut options: Vec<String> = vec![];
 
-            if let Some(sources) = &poll_posting_rule.content.sources {
-                for source in sources {
-                    let sourced_options = get_sourced_poll_options(
+            if let Some(option_sourcing) = &poll_posting_rule.content.option_sourcing {
+                let mut sourced_options = vec![];
+
+                for source in &option_sourcing.sources {
+                    let opts = get_sourced_poll_options(
                         source,
                         post_repository,
                         poll_action_log_repository,
                     )
                     .await?;
 
-                    if sourced_options.is_empty() {
-                        warn!(
-                            posting_rule_id = %poll_posting_rule.id(),
-                            "No options found from source, poll will not be posted"
-                        );
-                        return Ok(());
-                    }
-
-                    options.extend(sourced_options);
+                    sourced_options.extend(opts);
                 }
+
+                if sourced_options.is_empty() {
+                    match &option_sourcing.no_results_behavior {
+                        PollPostingRuleOptionSourcesNoResultsBehavior::SkipPosting => {
+                            info!(
+                                posting_rule_id = %poll_posting_rule.id(),
+                                "No sourced options found, skipping posting as per configuration"
+                            );
+                            return Ok(());
+                        }
+                        PollPostingRuleOptionSourcesNoResultsBehavior::FallbackToPostingRule {
+                            posting_rule_id,
+                        } => {
+                            info!(
+                                posting_rule_id = %poll_posting_rule.id(),
+                                fallback_posting_rule_id = %posting_rule_id,
+                                "No sourced options found, falling back to posting rule {} as per configuration",
+                                posting_rule_id
+                            );
+
+                            invoke_fallback_posting_rule(posting_rule_id, function_arn).await?;
+
+                            return Ok(());
+                        }
+                    }
+                }
+
+                options.extend(sourced_options);
             }
 
             options.extend(
@@ -146,6 +174,14 @@ async fn post_message(
                     .iter()
                     .map(|s| s.to_string()),
             );
+
+            if options.len() < 2 {
+                warn!(
+                    posting_rule_id = %poll_posting_rule.id(),
+                    "Not enough options to post a poll, at least 2 are required, skipping posting"
+                );
+                return Ok(());
+            }
 
             let message = bot
                 .send_poll(chat_id.clone(), topic_id, &question, &options[..])
@@ -204,6 +240,41 @@ async fn post_message(
             Ok(())
         }
     }
+}
+
+async fn invoke_fallback_posting_rule(
+    fallback_posting_rule_id: &str,
+    function_arn: &str,
+) -> Result<(), anyhow::Error> {
+    let aws_config = aws_config::load_from_env().await;
+    let lambda_client = LambdaClient::new(&aws_config);
+
+    let payload = SchedulerEvent {
+        posting_rule_id: fallback_posting_rule_id.to_string(),
+    };
+
+    // TODO: Deal with different error handling
+    let payload_bytes = serde_json::to_vec(&payload)
+        .map_err(|e| anyhow::anyhow!("Failed to serialize fallback scheduler payload: {e}"))?;
+
+    lambda_client
+        .invoke()
+        .function_name(function_arn)
+        .invocation_type(InvocationType::Event)
+        .payload(Blob::new(payload_bytes))
+        .send()
+        .await
+        .map_err(|e| anyhow::anyhow!(
+            "Failed to invoke fallback posting rule {fallback_posting_rule_id} asynchronously via {function_arn}: {e}"
+        ))?;
+
+    info!(
+        fallback_posting_rule_id = %fallback_posting_rule_id,
+        function_arn = %function_arn,
+        "Asynchronous fallback invocation dispatched"
+    );
+
+    Ok(())
 }
 
 async fn post_poll_action_log_message(

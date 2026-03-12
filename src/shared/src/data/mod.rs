@@ -12,7 +12,7 @@ pub use post::{PollPost, Post, PostRepository, PostTrait, TextPost};
 pub use posting_rule::{
     BasePostingRule, PollPostingRule, PollPostingRuleActionLog, PollPostingRuleActionLogOutput,
     PollPostingRuleOptionIntersectionSource, PollPostingRuleOptionIntersectionSourcePostSelector,
-    PollPostingRuleOptionSource, PollPostingRuleOptionSourceNoResultsBehavior, PostingRule,
+    PollPostingRuleOptionSource, PollPostingRuleOptionSourcesNoResultsBehavior, PostingRule,
     PostingRuleRepository, PostingRuleTrait, TextPostingRule,
 };
 pub use scheduler_event::SchedulerEvent;

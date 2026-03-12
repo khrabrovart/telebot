@@ -17,8 +17,15 @@ pub struct PollPostingRule {
 pub struct PollPostingRuleContent {
     pub question: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub sources: Option<Vec<PollPostingRuleOptionSource>>,
+    pub option_sourcing: Option<PollPostingRuleOptionSourcing>,
     pub options: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct PollPostingRuleOptionSourcing {
+    pub sources: Vec<PollPostingRuleOptionSource>,
+    pub no_results_behavior: PollPostingRuleOptionSourcesNoResultsBehavior,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -34,7 +41,6 @@ pub struct PollPostingRuleOptionIntersectionSource {
     pub source_post_selector: PollPostingRuleOptionIntersectionSourcePostSelector,
     pub target_option_id: i32,
     pub voter_ids: Vec<Vec<u64>>,
-    pub no_results_behavior: PollPostingRuleOptionSourceNoResultsBehavior,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -45,7 +51,7 @@ pub enum PollPostingRuleOptionIntersectionSourcePostSelector {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "Type", rename_all = "PascalCase")]
-pub enum PollPostingRuleOptionSourceNoResultsBehavior {
+pub enum PollPostingRuleOptionSourcesNoResultsBehavior {
     SkipPosting,
     FallbackToPostingRule {
         #[serde(rename = "PostingRuleId")]
