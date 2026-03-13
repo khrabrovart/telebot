@@ -35,16 +35,28 @@ pub async fn handle(event: LambdaEvent<SchedulerEvent>) -> Result<(), Error> {
     {
         Some(rule) => rule,
         None => {
-            return Err(format!("Posting rule not found: {}", payload.posting_rule_id).into());
+            warn!(
+                posting_rule_id = %payload.posting_rule_id,
+                "Posting rule not found, skipping"
+            );
+            return Ok(());
         }
     };
 
     if !posting_rule.is_valid() {
-        return Err(format!("Posting rule is misconfigured: {}", posting_rule.id()).into());
+        warn!(
+            posting_rule_id = %posting_rule.id(),
+            "Posting rule is misconfigured, skipping"
+        );
+        return Ok(());
     }
 
     if !posting_rule.is_active() {
-        return Err(format!("Posting rule is not active: {}", posting_rule.id()).into());
+        warn!(
+            posting_rule_id = %posting_rule.id(),
+            "Posting rule is not active, skipping"
+        );
+        return Ok(());
     }
 
     let bot_data_repository = BotDataRepository::new(&db).await?;
@@ -52,7 +64,12 @@ pub async fn handle(event: LambdaEvent<SchedulerEvent>) -> Result<(), Error> {
     let bot_data = match bot_data_repository.get(posting_rule.bot_id()).await? {
         Some(data) => data,
         None => {
-            return Err(format!("Bot data not found: {}", posting_rule.bot_id()).into());
+            warn!(
+                bot_id = %posting_rule.bot_id(),
+                posting_rule_id = %posting_rule.id(),
+                "Bot data not found, skipping"
+            );
+            return Ok(());
         }
     };
 
