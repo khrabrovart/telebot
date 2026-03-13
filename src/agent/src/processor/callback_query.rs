@@ -191,7 +191,11 @@ async fn render_rules_list_menu(
         .cloned()
         .collect();
 
-    filtered_rules.sort_by(|a, b| a.name().cmp(b.name()));
+    filtered_rules.sort_by(|a, b| {
+        b.is_active()
+            .cmp(&a.is_active())
+            .then_with(|| a.name().cmp(b.name()))
+    });
 
     bot.edit_message_text_with_markup(
         chat_id.clone(),

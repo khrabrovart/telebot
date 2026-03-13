@@ -12,8 +12,14 @@ pub fn list_rules_menu(posting_rules: &[PostingRule]) -> InlineKeyboardMarkup {
     let mut buttons: Vec<Vec<InlineKeyboardButton>> = posting_rules
         .iter()
         .map(|posting_rule| {
+            let state = if posting_rule.is_active() {
+                "🟢"
+            } else {
+                "🔴"
+            };
+
             vec![InlineKeyboardButton::callback(
-                posting_rule.name(),
+                format!("{} {}", state, posting_rule.name()),
                 format!("rule_details:{}", posting_rule.id()),
             )]
         })
