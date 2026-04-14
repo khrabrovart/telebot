@@ -1,5 +1,29 @@
 use chrono::{Datelike, Duration, Local, Weekday};
 
+const RUSSIAN_MONTH_NAMES_NOMINATIVE: [&str; 12] = [
+    "январь",
+    "февраль",
+    "март",
+    "апрель",
+    "май",
+    "июнь",
+    "июль",
+    "август",
+    "сентябрь",
+    "октябрь",
+    "ноябрь",
+    "декабрь",
+];
+
+pub fn next_month_name_russian() -> String {
+    let month = match Local::now().date_naive().month() {
+        12 => 1,
+        m => m + 1,
+    };
+
+    RUSSIAN_MONTH_NAMES_NOMINATIVE[(month - 1) as usize].to_string()
+}
+
 pub fn get_next_weekday(target: Weekday) -> chrono::NaiveDate {
     let now = Local::now().date_naive();
 

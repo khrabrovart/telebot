@@ -56,5 +56,9 @@ pub static REPLACEMENTS: Lazy<HashMap<&'static str, Box<ReplacementFn>>> = Lazy:
             next_sunday.format("%d.%m.%Y").to_string()
         }) as Box<ReplacementFn>,
     );
+    m.insert(
+        "{next_month}",
+        Box::new(|| date_utils::next_month_name_russian()) as Box<ReplacementFn>,
+    );
     m
 });
