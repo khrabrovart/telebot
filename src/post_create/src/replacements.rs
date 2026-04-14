@@ -58,7 +58,7 @@ pub static REPLACEMENTS: Lazy<HashMap<&'static str, Box<ReplacementFn>>> = Lazy:
     );
     m.insert(
         "{next_month}",
-        Box::new(|| date_utils::next_month_name_russian()) as Box<ReplacementFn>,
+        Box::new(date_utils::next_month_name_russian) as Box<ReplacementFn>,
     );
     m
 });
