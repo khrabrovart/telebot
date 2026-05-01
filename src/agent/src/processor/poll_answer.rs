@@ -108,7 +108,7 @@ async fn update_action_log_message(
         }
         PollActionLogOutput::OnlyWhenTargetOptionRevoked { target_option_id } => {
             for (actor_id, records) in grouped_records.into_iter() {
-                let mut target_option_timestamp: Option<i64> = None;
+                let mut target_option_record: Option<PollActionLogRecord> = None;
                 let mut target_option_revoked: bool = false;
 
                 for record in records.into_iter() {
@@ -122,9 +122,9 @@ async fn update_action_log_message(
                     }
 
                     if record.option_id == Some(target_option_id) {
-                        target_option_timestamp = Some(record.timestamp);
-                    } else if let Some(timestamp) = target_option_timestamp {
-                        if record.timestamp > timestamp {
+                        target_option_record = Some(record.clone());
+                    } else if let Some(ref target_option_record) = target_option_record {
+                        if record.is_newer_than(target_option_record) {
                             target_option_revoked = true;
                             filtered_records.insert(actor_id, vec![record.clone()]);
                         }

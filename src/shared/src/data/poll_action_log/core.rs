@@ -142,4 +142,14 @@ impl PollActionLogRecord {
             timestamp,
         }
     }
+
+    // TODO: Make UpdateId required and remove timestamp fallback
+    pub fn is_newer_than(&self, other: &PollActionLogRecord) -> bool {
+        match (self.update_id, other.update_id) {
+            (Some(a), Some(b)) => a > b,
+            (Some(_), None) => true,
+            (None, Some(_)) => false,
+            (None, None) => self.timestamp > other.timestamp,
+        }
+    }
 }

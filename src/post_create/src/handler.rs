@@ -421,7 +421,6 @@ async fn get_intersection_sourced_poll_options(
         "Action log found for poll post"
     );
 
-    // Find the latest record per actor that voted for the target option
     let target_option_voters: HashMap<u64, PollActionLogRecord> = action_log
         .records
         .iter()
@@ -429,7 +428,7 @@ async fn get_intersection_sourced_poll_options(
             latest_by_actor
                 .entry(record.actor_id)
                 .and_modify(|existing: &mut PollActionLogRecord| {
-                    if record.timestamp > existing.timestamp {
+                    if record.is_newer_than(existing) {
                         *existing = record.clone();
                     }
                 })
