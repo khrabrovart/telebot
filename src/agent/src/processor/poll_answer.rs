@@ -197,7 +197,7 @@ async fn update_action_log_message(
         "<b>Лог событий голосования</b>\n{}\n\n{}\n\n{}\n\n{}",
         poll_post.posting_rule_name(),
         output_description,
-        &poll_post.content.question,
+        poll_post.content.question,
         records_text
     );
 
