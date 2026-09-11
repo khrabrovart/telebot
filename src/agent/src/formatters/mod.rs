@@ -14,7 +14,11 @@ pub fn format_rule(posting_rule: &PostingRule, chat_name: &str) -> String {
     let is_valid = posting_rule.is_valid();
 
     match posting_rule {
-        PostingRule::Text(text_posting_rule) => text::format(text_posting_rule, &chat_name, is_valid),
-        PostingRule::Poll(poll_posting_rule) => poll::format(poll_posting_rule, &chat_name, is_valid),
+        PostingRule::Text(text_posting_rule) => {
+            text::format(text_posting_rule, &chat_name, is_valid)
+        }
+        PostingRule::Poll(poll_posting_rule) => {
+            poll::format(poll_posting_rule, &chat_name, is_valid)
+        }
     }
 }
