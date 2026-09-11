@@ -1,5 +1,5 @@
 mod app;
-mod formatter;
+mod formatters;
 mod handler;
 mod processor;
 mod telegram;

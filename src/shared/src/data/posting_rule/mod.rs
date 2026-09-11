@@ -12,6 +12,7 @@ pub use poll::{
     PollPostingRule, PollPostingRuleActionLog, PollPostingRuleActionLogOutput,
     PollPostingRuleOptionIntersectionSource, PollPostingRuleOptionIntersectionSourcePostSelector,
     PollPostingRuleOptionSource, PollPostingRuleOptionSourcesNoResultsBehavior,
+    PollPostingRuleOptionSourcing,
 };
 pub use repository::PostingRuleRepository;
 pub use text::TextPostingRule;
