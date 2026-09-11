@@ -7,6 +7,9 @@ permissions:
   contents: read
   id-token: write
 
+env:
+  TF_VAR_aws_assume_role_arn: ${{ secrets.AWS_ASSUME_ROLE_ARN }}
+
 jobs:
   build-agent:
     name: "Build Agent Lambda"
@@ -228,7 +231,7 @@ jobs:
           terraform_version: "~1.13"
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           mask-aws-account-id: true
@@ -240,7 +243,7 @@ jobs:
 
       - name: Terraform Init
         id: init
-        run: terraform init
+        run: terraform init -reconfigure
 
       - name: Terraform Validate
         id: validate
@@ -294,7 +297,7 @@ jobs:
           terraform_version: "~1.13"
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           mask-aws-account-id: true
@@ -302,7 +305,7 @@ jobs:
 
       - name: Terraform Init
         id: init
-        run: terraform init
+        run: terraform init -reconfigure
 
       - name: Terraform Apply
         id: apply
