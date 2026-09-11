@@ -14,10 +14,6 @@ pub fn format_base_fields(
         "🔴 ВЫКЛЮЧЕНО"
     };
     let validity = format_bool(is_valid);
-    let ttl = match posting_rule.ttl_hours() {
-        Some(hours) => format!("<b>{hours} ч</b>"),
-        None => "<b>-</b>".to_string(),
-    };
 
     format!(
         "<b>{name}</b>\n\n\
@@ -25,7 +21,6 @@ pub fn format_base_fields(
         Расписание: <b>{schedule}</b>\n\
         Закрепление: {pin}\n\
         Корректность данных: {validity}\n\
-        Инвалидация (TTL): {ttl}\n\
         Статус: <b>{status}</b>",
     )
 }
