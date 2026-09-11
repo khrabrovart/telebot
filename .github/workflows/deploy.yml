@@ -243,7 +243,7 @@ jobs:
 
       - name: Terraform Init
         id: init
-        run: terraform init -reconfigure
+        run: terraform init
 
       - name: Terraform Validate
         id: validate
@@ -305,7 +305,7 @@ jobs:
 
       - name: Terraform Init
         id: init
-        run: terraform init -reconfigure
+        run: terraform init
 
       - name: Terraform Apply
         id: apply
